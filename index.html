@@ -45,18 +45,103 @@ input,select,textarea,button{font-size:16px!important;font-family:inherit}
 .tab.active{color:var(--G)}
 .tab svg{width:22px;height:22px}
 .tab-badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--R);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;line-height:15px}
-.screen{display:none;padding:14px 13px 20px;min-height:calc(100vh - 56px - var(--safe))}
+.screen{display:none;padding:14px 13px 20px;min-height:calc(100vh - 56px - var(--safe));overflow-y:auto;overflow-x:hidden}
 .screen.active{display:block}
 .hdr{display:flex;align-items:center;gap:7px;margin-bottom:13px}
 .hdr select{flex:1;height:40px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);padding:0 28px 0 10px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
 .hdr-btn{width:40px;height:40px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);cursor:pointer;flex-shrink:0}
-.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
-.stat-card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--rl);padding:12px 11px}
-.slbl{font-size:11px;color:var(--t3);margin-bottom:4px}
-.sval{font-size:17px;font-weight:600;letter-spacing:-.3px;word-break:break-all}
+/* ── Strategy 1: Compact stat strip (was 2×2 grid, saves ~45px) ─────────
+   Four metrics in one horizontal scrolling row.
+   Each cell is ~25% wide with tighter padding.
+   Overflow:auto + scrollbar-width:none lets it scroll on very small screens
+   without a visible scrollbar cluttering the UI. ── */
+.stat-grid{display:flex;gap:8px;margin-bottom:11px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.stat-grid::-webkit-scrollbar{display:none}
+.stat-card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--r);padding:9px 10px;flex:1;min-width:72px;flex-shrink:0}
+.slbl{font-size:10px;color:var(--t3);margin-bottom:3px;white-space:nowrap}
+.sval{font-size:15px;font-weight:600;letter-spacing:-.3px;white-space:nowrap}
 .sval.g{color:var(--G)}.sval.r{color:var(--R)}.sval.o{color:var(--O)}
-.add-btn{width:100%;height:46px;border:1.5px dashed var(--bd2);border-radius:var(--rl);background:transparent;color:var(--t2);cursor:pointer;margin-bottom:13px;display:flex;align-items:center;justify-content:center;gap:7px}
+
+/* ── Strategy 3: FAB replaces the in-flow add-btn (saves 59px in the scroll area)
+   The FAB is position:fixed so it never takes up layout space.
+   It sits above the tabbar using calc() with safe-area-inset-bottom.
+   z-index:49 keeps it below the tabbar (z-index:50) so it never overlaps tabs.
+   The in-flow .add-btn is hidden on the home screen via #s-home .add-btn{display:none}
+   so the space is fully reclaimed. Other screens that need an in-flow button
+   still work because the selector is scoped to #s-home. ── */
+.add-btn{width:100%;height:44px;border:1.5px dashed var(--bd2);border-radius:var(--rl);background:transparent;color:var(--t2);cursor:pointer;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px}
 .add-icon{width:18px;height:18px;stroke:var(--G);fill:none;stroke-width:2.2;stroke-linecap:round;flex-shrink:0}
+#s-home .add-btn{display:none}
+
+/* FAB */
+.fab{
+  position:fixed;
+  right:18px;
+  bottom:calc(64px + var(--safe));   /* sits just above the tabbar */
+  width:52px;height:52px;
+  background:var(--G);
+  border:none;border-radius:50%;
+  box-shadow:0 2px 8px rgba(29,158,117,.45); /* subtle — flat shadow avoids neon */
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:49;
+  transition:transform .15s ease,opacity .15s ease;
+  /* only shown on home screen */
+  visibility:hidden;opacity:0;pointer-events:none;
+}
+.fab.visible{visibility:visible;opacity:1;pointer-events:auto}
+.fab:active{transform:scale(.93)}
+.fab svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round}
+/* FAB label tooltip — appears on long-press / desktop hover */
+.fab::after{
+  content:'新增費用';
+  position:absolute;
+  right:60px;top:50%;transform:translateY(-50%);
+  background:rgba(26,26,24,.85);color:#fff;
+  font-size:12px;padding:5px 10px;border-radius:99px;
+  white-space:nowrap;pointer-events:none;
+  opacity:0;transition:opacity .2s;
+}
+.fab:hover::after,.fab:focus::after{opacity:1}
+
+/* ── Strategy 2 + Strategy 4: Sticky condensed header + scroll hint ──────────
+   .sticky-hdr: position:sticky on top keeps the month picker always in view
+   while the user scrolls the item list.
+   .scroll-hint: a fixed chevron at the bottom of the screen content area,
+   visible only when the page is scrollable and fades out once user scrolls.
+   Uses pointer-events:none so it never blocks taps. ── */
+.sticky-hdr{
+  position:sticky;
+  top:0;
+  z-index:30;
+  background:var(--bg2);
+  padding:10px 13px 6px;
+  margin:-14px -13px 8px;  /* cancel screen padding so it bleeds edge-to-edge */
+  border-bottom:0.5px solid var(--bd);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  /* transition height for condensed mode */
+  transition:padding .2s ease,border-color .2s ease;
+}
+.sticky-hdr.condensed{
+  padding:6px 13px 4px;
+  border-color:var(--bd2);
+}
+.scroll-hint{
+  position:fixed;
+  bottom:calc(62px + var(--safe) + 8px);
+  left:50%;transform:translateX(-50%);
+  width:28px;height:28px;
+  background:var(--bg);
+  border:0.5px solid var(--bd2);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+  z-index:48;
+  opacity:0;
+  transition:opacity .3s ease;
+}
+.scroll-hint.visible{opacity:.85}
+.scroll-hint svg{width:12px;height:12px;color:var(--t3)}
 .rem-section{margin-bottom:14px}
 .rem-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
 .rem-hdr-title{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:center;gap:6px}
@@ -207,11 +292,14 @@ input,select,textarea,button{font-size:16px!important;font-family:inherit}
 <body>
 <div id="app">
 <div id="s-home" class="screen active">
+  <!-- Strategy 2+4: sticky header — stays at top while item list scrolls -->
+  <div class="sticky-hdr" id="home-sticky-hdr">
   <div class="hdr">
     <button class="hdr-btn" onclick="shiftM(-1)">&#8249;</button>
     <select id="hy" onchange="rHome()"></select>
     <select id="hm" onchange="rHome()"></select>
     <button class="hdr-btn" onclick="shiftM(1)">&#8250;</button>
+  </div>
   </div>
   <div class="stat-grid">
     <div class="stat-card"><div class="slbl">本月總支出</div><div class="sval" id="h-tot">—</div></div>
@@ -315,6 +403,16 @@ input,select,textarea,button{font-size:16px!important;font-family:inherit}
     <div class="cttl">提醒設定 <a onclick="openRemindModal()">設定</a></div>
     <div id="remind-preview" style="font-size:13px;color:var(--t2)"></div>
   </div>
+</div>
+
+<!-- Strategy 3: FAB — floats above tabbar, only visible on home screen -->
+<button class="fab" id="fab" onclick="openForm()" aria-label="新增費用項目">
+  <svg viewBox="0 0 22 22"><path d="M11 3v16M3 11h16"/></svg>
+</button>
+
+<!-- Strategy 4: Scroll hint — fades in when content below fold exists -->
+<div class="scroll-hint" id="scroll-hint" aria-hidden="true">
+  <svg viewBox="0 0 16 16"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
 </div>
 
 <div class="tabbar">
@@ -577,6 +675,53 @@ function buildSelects(){
   document.getElementById('rt-m').value=nowM;
 }
 const curYM=()=>({y:+document.getElementById('hy').value,m:+document.getElementById('hm').value});
+
+// ── Strategy 2+3+4: FAB visibility, sticky condensed header, scroll hint ──
+// All three are driven by the same scroll position on the home screen.
+// We attach ONE scroll listener to the screen div (not window) so it only
+// fires on the right element and doesn't interfere with other screens.
+function initScrollBehavior(){
+  const homeScreen = document.getElementById('s-home');
+  const fab        = document.getElementById('fab');
+  const hint       = document.getElementById('scroll-hint');
+  const stickyHdr  = document.getElementById('home-sticky-hdr');
+  let ticking      = false;        // requestAnimationFrame throttle
+
+  // Strategy 3: FAB appears when home screen is active
+  function updateFab(screenName){
+    fab.classList.toggle('visible', screenName==='home');
+  }
+  // Expose so showS() can call it
+  window._updateFab = updateFab;
+  updateFab('home');  // initial state
+
+  // Strategy 2 + 4: scroll handler — condensed header + scroll hint
+  function onScroll(){
+    if(ticking) return;
+    ticking = true;
+    requestAnimationFrame(()=>{
+      const sy = homeScreen.scrollTop;
+
+      // Condensed header: kicks in after 10px scroll — hides bottom padding
+      stickyHdr.classList.toggle('condensed', sy > 10);
+
+      // Scroll hint: visible only when there's more content below the fold
+      // and user hasn't scrolled yet (within first 30px)
+      const scrollable = homeScreen.scrollHeight > homeScreen.clientHeight + 20;
+      hint.classList.toggle('visible', scrollable && sy < 30);
+
+      ticking = false;
+    });
+  }
+
+  homeScreen.addEventListener('scroll', onScroll, {passive:true});
+
+  // Initial check after each home render
+  window._triggerScrollCheck = () => {
+    homeScreen.scrollTop = 0;          // reset to top on fresh render
+    setTimeout(onScroll, 80);          // let DOM paint first
+  };
+}
 function shiftM(d){
   const sy=document.getElementById('hy'),sm=document.getElementById('hm');
   let y=+sy.value,m=+sm.value+d;
@@ -698,6 +843,8 @@ async function rHome(){
     const lbl=document.createElement('div');lbl.className='slabel';lbl.textContent='代墊款';el.appendChild(lbl);
     advance.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>el.appendChild(makeCard(x)));
   }
+  // Strategy 4: recheck scrollability after list renders
+  if(window._triggerScrollCheck) window._triggerScrollCheck();
 }
 
 // ── Item card ─────────────────────────────────────────────
@@ -974,6 +1121,8 @@ const SCREENS=['home','list','chart','trend'];
 function showS(name){
   SCREENS.forEach(s=>{document.getElementById('s-'+s).classList.toggle('active',s===name);document.getElementById('tab-'+s).classList.toggle('active',s===name);});
   window.scrollTo(0,0);
+  // Strategy 3: show FAB only on home screen
+  if(window._updateFab) window._updateFab(name);
   if(name==='chart'&&dirty.chart)rChart();
   else if(name==='trend'&&dirty.trend)rTrend();
   else if(name==='list'&&dirty.list)rList();
@@ -1122,6 +1271,7 @@ if('serviceWorker'in navigator){const sw=`const C='ep-v7';self.addEventListener(
 openDB().then(()=>{
   buildSelects();
   refreshCatSel();
+  initScrollBehavior();
   document.getElementById('fa').classList.add('af');
   rHome();
 });
