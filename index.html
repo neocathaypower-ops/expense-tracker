@@ -32,116 +32,178 @@
   --Ol:#4A1B0C;--Od:#F0997B;--Al:#412402;--Bl:#042C53;--Bd:#85B7EB
 }}
 html,body{height:100%;background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--tx);overflow-x:hidden}
-/* FIX 1 — Viewport lockdown when full-screen form is open.
-   iOS Safari ignores overflow:hidden on <body> for rubber-band bouncing.
-   position:fixed is the only reliable cross-Safari solution.
-   We save scrollY before locking and restore it on close so the
-   background list doesn't jump to top when the form closes. */
+/* ═══════════════════════════════════════════════════════════════
+   PART 1 — ZERO-SCROLL VIEWPORT
+   Three layers are needed because iOS Safari is stubborn:
+   1. html/body: overscroll-behavior:none kills rubber-band at document level
+   2. #app: overflow:hidden clips anything that escapes the container
+   3. #s-home: display:flex+overflow:hidden makes the home screen itself
+      a rigid fixed-height column; only #home-list scrolls internally
+   touch-action:pan-y on #home-list allows vertical scroll there only.
+═══════════════════════════════════════════════════════════════ */
+html,body{
+  height:100%;
+  background:var(--bg2);
+  font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+  color:var(--tx);
+  overflow:hidden;                   /* Part 1: clip overflow at root */
+  overscroll-behavior:none;          /* Part 1: kill rubber-band globally */
+  -webkit-overflow-scrolling:auto;   /* Part 1: disable momentum on iOS */
+}
+/* Scroll-lock class used when full-screen form slides in */
 body.scroll-lock{overflow:hidden;position:fixed;width:100%;left:0}
 input,select,textarea,button{font-size:16px!important;font-family:inherit}
-#app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
-.tabbar{display:flex;background:var(--bg);border-top:0.5px solid var(--bd);padding-bottom:var(--safe);position:sticky;bottom:0;z-index:50;flex-shrink:0}
+#app{
+  max-width:480px;margin:0 auto;
+  height:100vh;                      /* Part 1: strict viewport height */
+  display:flex;flex-direction:column;
+  position:relative;
+  overflow:hidden;                   /* Part 1: second layer of clip */
+  overscroll-behavior:none;
+}
+
+/* ── Tab bar — anchored at bottom, never moves ── */
+.tabbar{display:flex;background:var(--bg);border-top:0.5px solid var(--bd);padding-bottom:var(--safe);flex-shrink:0;z-index:50}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0 5px;border:none;background:transparent;color:var(--t3);font-size:10px;cursor:pointer;gap:3px;position:relative}
 .tab.active{color:var(--G)}
 .tab svg{width:22px;height:22px}
 .tab-badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--R);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:99px;min-width:16px;text-align:center;line-height:15px}
-.screen{display:none;padding:14px 13px 20px;min-height:calc(100vh - 56px - var(--safe));overflow-y:auto;overflow-x:hidden}
-.screen.active{display:block}
-.hdr{display:flex;align-items:center;gap:7px;margin-bottom:13px}
-.hdr select{flex:1;height:40px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);padding:0 28px 0 10px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
-.hdr-btn{width:40px;height:40px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);cursor:pointer;flex-shrink:0}
-/* ── Strategy 1: Compact stat strip (was 2×2 grid, saves ~45px) ─────────
-   Four metrics in one horizontal scrolling row.
-   Each cell is ~25% wide with tighter padding.
-   Overflow:auto + scrollbar-width:none lets it scroll on very small screens
-   without a visible scrollbar cluttering the UI. ── */
+
+/* ── Screens: non-home screens scroll normally ── */
+.screen{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 13px 20px;overscroll-behavior-y:contain}
+.screen.active{display:flex;flex-direction:column}
+
+/* ═══════════════════════════════════════════════════════════════
+   PART 2 — HOME SCREEN FIXED VIEWPORT ARCHITECTURE
+   #s-home is a rigid flex column filling all available space.
+   Three fixed-height zones + one flex:1 scroll zone:
+     ┌─────────────────────────────────────┐
+     │  .home-nav       (52px)  — month nav│
+     │  .hero-card      (auto)  — ring+KPIs│
+     │  .home-mid       (auto)  — bar+alerts│
+     │  #home-list      (flex:1)— scrolls  │
+     └─────────────────────────────────────┘
+═══════════════════════════════════════════════════════════════ */
+#s-home{
+  padding:0;                         /* remove default screen padding */
+  overflow:hidden;                   /* Part 1: the home screen itself never scrolls */
+  touch-action:pan-y;
+}
+
+/* Month nav bar */
+.home-nav{
+  display:flex;align-items:center;gap:7px;
+  padding:10px 14px 8px;
+  padding-top:calc(10px + var(--safet));
+  flex-shrink:0;
+  background:var(--bg2);
+}
+.home-nav select{flex:1;height:36px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);padding:0 26px 0 10px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.home-nav-btn{width:36px;height:36px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+
+/* Hero card — progress ring + 3 KPI chips */
+.hero-card{
+  margin:0 13px 10px;
+  background:var(--bg);
+  border:0.5px solid var(--bd);
+  border-radius:18px;
+  padding:16px 16px 14px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+/* SVG progress ring */
+.ring-wrap{position:relative;width:96px;height:96px;flex-shrink:0}
+.ring-wrap svg{width:96px;height:96px;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--bg3);stroke-width:8}
+.ring-fg{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1),stroke .3s}
+.ring-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.ring-pct{font-size:20px;font-weight:700;letter-spacing:-1px;line-height:1}
+.ring-pct-lbl{font-size:9px;color:var(--t3);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+/* KPI chips column */
+.kpi-col{flex:1;display:flex;flex-direction:column;gap:8px}
+.kpi-chip{background:var(--bg2);border-radius:var(--r);padding:8px 11px;display:flex;flex-direction:column;gap:2px}
+.kpi-lbl{font-size:10px;color:var(--t3);font-weight:500;white-space:nowrap}
+.kpi-val{font-size:16px;font-weight:700;letter-spacing:-.5px;white-space:nowrap}
+.kpi-val.g{color:var(--G)}.kpi-val.r{color:var(--R)}.kpi-val.o{color:var(--O)}
+
+/* Home middle zone: budget bar + reminders (condensed, max 2 reminders) */
+.home-mid{
+  padding:0 13px;
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+/* Compact budget progress bar */
+.bud-bar-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg);border:0.5px solid var(--bd);
+  border-radius:var(--r);padding:9px 12px;
+}
+.bud-bar-label{font-size:11px;color:var(--t2);flex-shrink:0;font-weight:500}
+.bud-bar-track{flex:1;background:var(--bg3);border-radius:99px;height:6px;overflow:hidden}
+.bud-bar-fill{height:100%;border-radius:99px;background:var(--G);transition:width .5s cubic-bezier(.4,0,.2,1)}
+.bud-bar-fill.warn{background:var(--A)}.bud-bar-fill.over{background:var(--R)}
+.bud-bar-pct{font-size:11px;font-weight:600;color:var(--t2);flex-shrink:0;min-width:30px;text-align:right}
+
+/* Item list — the ONLY scrollable zone on home screen */
+.home-list-wrap{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;     /* Part 1: contain scroll to this element */
+  touch-action:pan-y;
+  padding:8px 13px calc(80px + var(--safe));  /* bottom pad clears FAB */
+  min-height:0;                      /* critical: prevents flex child from expanding */
+}
+.home-list-wrap::-webkit-scrollbar{display:none}
+
+/* ═══════════════════════════════════════════════════════════════
+   EMPTY STATE — replaces the flat text with an engaging illustration
+═══════════════════════════════════════════════════════════════ */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;
+  padding:32px 24px;text-align:center;
+}
+.empty-state-art{
+  width:120px;height:120px;margin-bottom:18px;
+}
+.empty-state h3{font-size:16px;font-weight:600;color:var(--tx);margin-bottom:7px}
+.empty-state p{font-size:13px;color:var(--t3);line-height:1.7;margin-bottom:20px;max-width:220px}
+.empty-state-cta{
+  height:42px;padding:0 24px;
+  background:var(--G);color:#fff;
+  border:none;border-radius:99px;
+  font-size:14px;font-weight:600;cursor:pointer;
+}
+
+/* Stat grid used on other screens (List / Chart / Trend) */
 .stat-grid{display:flex;gap:8px;margin-bottom:11px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .stat-grid::-webkit-scrollbar{display:none}
 .stat-card{background:var(--bg);border:0.5px solid var(--bd);border-radius:var(--r);padding:9px 10px;flex:1;min-width:72px;flex-shrink:0}
 .slbl{font-size:10px;color:var(--t3);margin-bottom:3px;white-space:nowrap}
 .sval{font-size:15px;font-weight:600;letter-spacing:-.3px;white-space:nowrap}
 .sval.g{color:var(--G)}.sval.r{color:var(--R)}.sval.o{color:var(--O)}
-
-/* ── Strategy 3: FAB replaces the in-flow add-btn (saves 59px in the scroll area)
-   The FAB is position:fixed so it never takes up layout space.
-   It sits above the tabbar using calc() with safe-area-inset-bottom.
-   z-index:49 keeps it below the tabbar (z-index:50) so it never overlaps tabs.
-   The in-flow .add-btn is hidden on the home screen via #s-home .add-btn{display:none}
-   so the space is fully reclaimed. Other screens that need an in-flow button
-   still work because the selector is scoped to #s-home. ── */
+/* FAB — fixed above tabbar, thumb-zone right */
+.fab{position:fixed;right:18px;bottom:calc(64px + var(--safe));width:52px;height:52px;background:var(--G);border:none;border-radius:50%;box-shadow:0 2px 8px rgba(29,158,117,.38);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:49;transition:transform .15s ease,opacity .2s,visibility .2s;visibility:hidden;opacity:0;pointer-events:none}
+.fab.visible{visibility:visible;opacity:1;pointer-events:auto}
+.fab:active{transform:scale(.92)}
+.fab svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round}
+.fab::after{content:'新增費用';position:absolute;right:60px;top:50%;transform:translateY(-50%);background:rgba(26,26,24,.88);color:#fff;font-size:12px;padding:5px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .2s}
+.fab:hover::after,.fab:focus::after{opacity:1}
+/* add-btn + hdr used on non-home screens */
 .add-btn{width:100%;height:44px;border:1.5px dashed var(--bd2);border-radius:var(--rl);background:transparent;color:var(--t2);cursor:pointer;margin-bottom:11px;display:flex;align-items:center;justify-content:center;gap:7px}
 .add-icon{width:18px;height:18px;stroke:var(--G);fill:none;stroke-width:2.2;stroke-linecap:round;flex-shrink:0}
-#s-home .add-btn{display:none}
-
-/* FAB */
-.fab{
-  position:fixed;
-  right:18px;
-  bottom:calc(64px + var(--safe));   /* sits just above the tabbar */
-  width:52px;height:52px;
-  background:var(--G);
-  border:none;border-radius:50%;
-  box-shadow:0 2px 8px rgba(29,158,117,.45); /* subtle — flat shadow avoids neon */
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;z-index:49;
-  transition:transform .15s ease,opacity .15s ease;
-  /* only shown on home screen */
-  visibility:hidden;opacity:0;pointer-events:none;
-}
-.fab.visible{visibility:visible;opacity:1;pointer-events:auto}
-.fab:active{transform:scale(.93)}
-.fab svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round}
-/* FAB label tooltip — appears on long-press / desktop hover */
-.fab::after{
-  content:'新增費用';
-  position:absolute;
-  right:60px;top:50%;transform:translateY(-50%);
-  background:rgba(26,26,24,.85);color:#fff;
-  font-size:12px;padding:5px 10px;border-radius:99px;
-  white-space:nowrap;pointer-events:none;
-  opacity:0;transition:opacity .2s;
-}
-.fab:hover::after,.fab:focus::after{opacity:1}
-
-/* ── Strategy 2 + Strategy 4: Sticky condensed header + scroll hint ──────────
-   .sticky-hdr: position:sticky on top keeps the month picker always in view
-   while the user scrolls the item list.
-   .scroll-hint: a fixed chevron at the bottom of the screen content area,
-   visible only when the page is scrollable and fades out once user scrolls.
-   Uses pointer-events:none so it never blocks taps. ── */
-.sticky-hdr{
-  position:sticky;
-  top:0;
-  z-index:30;
-  background:var(--bg2);
-  padding:10px 13px 6px;
-  margin:-14px -13px 8px;  /* cancel screen padding so it bleeds edge-to-edge */
-  border-bottom:0.5px solid var(--bd);
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-  /* transition height for condensed mode */
-  transition:padding .2s ease,border-color .2s ease;
-}
-.sticky-hdr.condensed{
-  padding:6px 13px 4px;
-  border-color:var(--bd2);
-}
-.scroll-hint{
-  position:fixed;
-  bottom:calc(62px + var(--safe) + 8px);
-  left:50%;transform:translateX(-50%);
-  width:28px;height:28px;
-  background:var(--bg);
-  border:0.5px solid var(--bd2);
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  pointer-events:none;
-  z-index:48;
-  opacity:0;
-  transition:opacity .3s ease;
-}
-.scroll-hint.visible{opacity:.85}
-.scroll-hint svg{width:12px;height:12px;color:var(--t3)}
+.hdr{display:flex;align-items:center;gap:7px;margin-bottom:13px}
+.hdr select{flex:1;height:40px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);padding:0 28px 0 10px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center}
+.hdr-btn{width:40px;height:40px;border:0.5px solid var(--bd2);border-radius:var(--r);background:var(--bg);color:var(--tx);cursor:pointer;flex-shrink:0}
 .rem-section{margin-bottom:14px}
 .rem-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
 .rem-hdr-title{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:center;gap:6px}
@@ -291,28 +353,67 @@ input,select,textarea,button{font-size:16px!important;font-family:inherit}
 </head>
 <body>
 <div id="app">
+<!-- ═══════════════════════════════════════════════════════════
+     HOME — fixed viewport, zero-scroll outer container
+     Layout (top→bottom, all flex children of #s-home):
+       .home-nav       52px  month picker
+       .hero-card      ~160px progress ring + 3 KPI chips
+       .home-mid       ~50px budget bar + max-2 reminders
+       .home-list-wrap flex:1 ONLY scrollable zone
+═══════════════════════════════════════════════════════════════ -->
 <div id="s-home" class="screen active">
-  <!-- Strategy 2+4: sticky header — stays at top while item list scrolls -->
-  <div class="sticky-hdr" id="home-sticky-hdr">
-  <div class="hdr">
-    <button class="hdr-btn" onclick="shiftM(-1)">&#8249;</button>
+  <!-- Month nav -->
+  <div class="home-nav">
+    <button class="home-nav-btn" onclick="shiftM(-1)">&#8249;</button>
     <select id="hy" onchange="rHome()"></select>
     <select id="hm" onchange="rHome()"></select>
-    <button class="hdr-btn" onclick="shiftM(1)">&#8250;</button>
+    <button class="home-nav-btn" onclick="shiftM(1)">&#8250;</button>
   </div>
+
+  <!-- Hero: progress ring + KPI chips -->
+  <div class="hero-card">
+    <div class="ring-wrap">
+      <svg viewBox="0 0 96 96">
+        <circle class="ring-bg" cx="48" cy="48" r="40"/>
+        <circle class="ring-fg" id="ring-arc" cx="48" cy="48" r="40"
+          stroke-dasharray="251.2" stroke-dashoffset="251.2" stroke="var(--G)"/>
+      </svg>
+      <div class="ring-center">
+        <div class="ring-pct" id="ring-pct">0%</div>
+        <div class="ring-pct-lbl">已使用</div>
+      </div>
+    </div>
+    <div class="kpi-col">
+      <div class="kpi-chip">
+        <div class="kpi-lbl">本月總支出</div>
+        <div class="kpi-val" id="h-tot">—</div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-lbl">已繳</div>
+        <div class="kpi-val g" id="h-paid">—</div>
+      </div>
+      <div class="kpi-chip">
+        <div class="kpi-lbl">未繳 / 代墊待收</div>
+        <div class="kpi-val r" id="h-unpaid-adv">—</div>
+      </div>
+    </div>
   </div>
-  <div class="stat-grid">
-    <div class="stat-card"><div class="slbl">本月總支出</div><div class="sval" id="h-tot">—</div></div>
-    <div class="stat-card"><div class="slbl">已繳</div><div class="sval g" id="h-paid">—</div></div>
-    <div class="stat-card"><div class="slbl">未繳</div><div class="sval r" id="h-unpaid">—</div></div>
-    <div class="stat-card"><div class="slbl">代墊待收</div><div class="sval o" id="h-adv">—</div></div>
+
+  <!-- Budget bar + reminders -->
+  <div class="home-mid">
+    <div class="bud-bar-row" id="bud-bar-row">
+      <span class="bud-bar-label">月預算</span>
+      <div class="bud-bar-track"><div class="bud-bar-fill" id="bud-bar-fill" style="width:0%"></div></div>
+      <span class="bud-bar-pct" id="bud-bar-pct">—</span>
+    </div>
+    <div id="reminder-wrap"></div>
+    <div id="copy-wrap"></div>
   </div>
-  <div id="reminder-wrap"></div>
-  <div id="copy-wrap"></div>
-  <button class="add-btn" onclick="openForm()">
-    <svg class="add-icon" viewBox="0 0 18 18"><path d="M9 2v14M2 9h14"/></svg>新增費用項目
-  </button>
-  <div id="home-list"></div>
+
+  <!-- Scrollable item list — the ONLY scroll zone -->
+  <div class="home-list-wrap" id="home-list-wrap">
+    <div id="home-list"></div>
+  </div>
 </div>
 
 <div id="s-list" class="screen">
@@ -681,45 +782,33 @@ const curYM=()=>({y:+document.getElementById('hy').value,m:+document.getElementB
 // We attach ONE scroll listener to the screen div (not window) so it only
 // fires on the right element and doesn't interfere with other screens.
 function initScrollBehavior(){
-  const homeScreen = document.getElementById('s-home');
-  const fab        = document.getElementById('fab');
-  const hint       = document.getElementById('scroll-hint');
-  const stickyHdr  = document.getElementById('home-sticky-hdr');
-  let ticking      = false;        // requestAnimationFrame throttle
+  // Scroll events now come from the inner list wrap, not the screen itself
+  const listWrap  = document.getElementById('home-list-wrap');
+  const fab       = document.getElementById('fab');
+  const hint      = document.getElementById('scroll-hint');
 
-  // Strategy 3: FAB appears when home screen is active
   function updateFab(screenName){
     fab.classList.toggle('visible', screenName==='home');
   }
-  // Expose so showS() can call it
   window._updateFab = updateFab;
-  updateFab('home');  // initial state
+  updateFab('home');
 
-  // Strategy 2 + 4: scroll handler — condensed header + scroll hint
+  let ticking=false;
   function onScroll(){
-    if(ticking) return;
-    ticking = true;
+    if(ticking)return;
+    ticking=true;
     requestAnimationFrame(()=>{
-      const sy = homeScreen.scrollTop;
-
-      // Condensed header: kicks in after 10px scroll — hides bottom padding
-      stickyHdr.classList.toggle('condensed', sy > 10);
-
-      // Scroll hint: visible only when there's more content below the fold
-      // and user hasn't scrolled yet (within first 30px)
-      const scrollable = homeScreen.scrollHeight > homeScreen.clientHeight + 20;
-      hint.classList.toggle('visible', scrollable && sy < 30);
-
-      ticking = false;
+      const sy=listWrap.scrollTop;
+      const scrollable=listWrap.scrollHeight>listWrap.clientHeight+20;
+      if(hint) hint.classList.toggle('visible',scrollable&&sy<30);
+      ticking=false;
     });
   }
+  listWrap.addEventListener('scroll',onScroll,{passive:true});
 
-  homeScreen.addEventListener('scroll', onScroll, {passive:true});
-
-  // Initial check after each home render
-  window._triggerScrollCheck = () => {
-    homeScreen.scrollTop = 0;          // reset to top on fresh render
-    setTimeout(onScroll, 80);          // let DOM paint first
+  window._triggerScrollCheck=()=>{
+    listWrap.scrollTop=0;
+    setTimeout(onScroll,80);
   };
 }
 function shiftM(d){
@@ -778,7 +867,8 @@ async function buildRems(){
   rems.sort((a,b)=>{const o={overdue:0,'due-soon':1,advance:2};return o[a.type]!==o[b.type]?o[a.type]-o[b.type]:(a.diff!==null&&b.diff!==null?a.diff-b.diff:0);});
   return rems;
 }
-function renderRems(rems){
+function renderRems(rems,maxShow){
+  maxShow=maxShow||5;
   const wrap=document.getElementById('reminder-wrap');
   const badge=document.getElementById('remind-badge');
   const n=rems.length;
@@ -791,7 +881,7 @@ function renderRems(rems){
   const dis=document.createElement('button');dis.className='rem-dismiss';dis.textContent='今日不顯示';
   dis.onclick=()=>{remDismissed=today();localStorage.setItem('ep_rem_dis',remDismissed);wrap.innerHTML='';badge.style.display='none';};
   hdr.append(htl,dis);sec.appendChild(hdr);
-  rems.slice(0,5).forEach(r=>{
+  rems.slice(0,maxShow).forEach(r=>{
     const card=document.createElement('div');card.className=`rem-card ${r.type}`;
     card.onclick=()=>openForm(r.item.id);
     let ic,svg,meta,ac;
@@ -805,27 +895,76 @@ function renderRems(rems){
   wrap.innerHTML='';wrap.appendChild(sec);
 }
 
-// ── HOME ──────────────────────────────────────────────────
+// ── HOME — redesigned fixed-viewport dashboard ────────────────
 async function rHome(){
   dirty.home=false;
   const{y,m}=curYM(),key=ymStr(y,m),all=await getAll();
-  const items=all.filter(x=>x.ym===key);
-  const normal=items.filter(x=>x.itype!=='advance');
+  const items  =all.filter(x=>x.ym===key);
+  const normal =items.filter(x=>x.itype!=='advance');
   const advance=items.filter(x=>x.itype==='advance');
-  const total=normal.reduce((s,x)=>s+x.amount,0);
-  const paid=normal.filter(x=>x.paid===1).reduce((s,x)=>s+x.amount,0);
+  const total  =normal.reduce((s,x)=>s+x.amount,0);
+  const paid   =normal.filter(x=>x.paid===1).reduce((s,x)=>s+x.amount,0);
+  const unpaid =total-paid;
   const advUnrec=advance.filter(x=>x.recovered!==1).reduce((s,x)=>s+x.amount,0);
+
+  // KPI chips
   document.getElementById('h-tot').textContent=fmt(total);
   document.getElementById('h-paid').textContent=fmt(paid);
-  document.getElementById('h-unpaid').textContent=fmt(total-paid);
-  document.getElementById('h-adv').textContent=fmt(advUnrec);
-  const rems=await buildRems();renderRems(rems);
+  document.getElementById('h-unpaid-adv').textContent=fmt(unpaid+advUnrec);
+
+  // Progress ring — circumference = 2πr = 2×π×40 ≈ 251.2
+  const CIRC=251.2;
+  const bTotal=budStore.total||0;
+  const pct=bTotal>0?Math.min(Math.round(total/bTotal*100),100):0;
+  const arc=document.getElementById('ring-arc');
+  const offset=CIRC-(pct/100*CIRC);
+  arc.style.strokeDashoffset=offset;
+  arc.style.stroke=pct>=100?'var(--R)':pct>=80?'var(--A)':'var(--G)';
+  document.getElementById('ring-pct').textContent=bTotal>0?pct+'%':'—';
+
+  // Budget bar
+  const barFill=document.getElementById('bud-bar-fill');
+  const barPct =document.getElementById('bud-bar-pct');
+  if(bTotal>0){
+    barFill.style.width=pct+'%';
+    barFill.className='bud-bar-fill'+(pct>=100?' over':pct>=80?' warn':'');
+    barPct.textContent=fmt(total)+' / '+fmt(bTotal);
+  } else {
+    barFill.style.width='0%';
+    barPct.textContent='未設定預算';
+  }
+
+  // Reminders (max 2 shown in home-mid to save height)
+  const rems=await buildRems();
+  renderRems(rems,2);  // pass maxShow=2 for home screen
+
+  // Copy banner
   const prevM=m===1?12:m-1,prevY=m===1?y-1:y;
   const prevItems=all.filter(x=>x.ym===ymStr(prevY,prevM));
   document.getElementById('copy-wrap').innerHTML=(!items.length&&prevItems.length)
     ?`<div class="copybanner" onclick="copyPrev()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><p>複製上月 <strong>${prevItems.length} 筆</strong>到本月？</p><span>複製</span></div>`:'';
+
+  // Item list
   const el=document.getElementById('home-list');
-  if(!items.length){el.innerHTML='<div class="empty">本月尚無費用項目<br>點上方「新增費用項目」開始記帳</div>';return;}
+  if(!items.length){
+    // Empty state with illustration
+    el.innerHTML=`
+      <div class="empty-state">
+        <svg class="empty-state-art" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="20" y="30" width="80" height="60" rx="10" fill="var(--bg3)"/>
+          <rect x="20" y="30" width="80" height="18" rx="10" fill="var(--bd2)"/>
+          <rect x="30" y="58" width="30" height="6" rx="3" fill="var(--G)" opacity=".5"/>
+          <rect x="30" y="70" width="48" height="6" rx="3" fill="var(--bd2)"/>
+          <circle cx="86" cy="86" r="18" fill="var(--G)"/>
+          <path d="M86 79v14M79 86h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        <h3>本月尚無費用項目</h3>
+        <p>點下方按鈕新增第一筆費用，<br>開始追蹤你的每月支出</p>
+        <button class="empty-state-cta" onclick="openForm()">新增費用項目</button>
+      </div>`;
+    if(window._triggerScrollCheck) window._triggerScrollCheck();
+    return;
+  }
   el.innerHTML='';
   if(advance.filter(x=>x.recovered!==1).length){
     const unrec=advance.filter(x=>x.recovered!==1);
@@ -843,7 +982,6 @@ async function rHome(){
     const lbl=document.createElement('div');lbl.className='slabel';lbl.textContent='代墊款';el.appendChild(lbl);
     advance.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>el.appendChild(makeCard(x)));
   }
-  // Strategy 4: recheck scrollability after list renders
   if(window._triggerScrollCheck) window._triggerScrollCheck();
 }
 
