@@ -32,6 +32,12 @@
   --Ol:#4A1B0C;--Od:#F0997B;--Al:#412402;--Bl:#042C53;--Bd:#85B7EB
 }}
 html,body{height:100%;background:var(--bg2);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;color:var(--tx);overflow-x:hidden}
+/* FIX 1 — Viewport lockdown when full-screen form is open.
+   iOS Safari ignores overflow:hidden on <body> for rubber-band bouncing.
+   position:fixed is the only reliable cross-Safari solution.
+   We save scrollY before locking and restore it on close so the
+   background list doesn't jump to top when the form closes. */
+body.scroll-lock{overflow:hidden;position:fixed;width:100%;left:0}
 input,select,textarea,button{font-size:16px!important;font-family:inherit}
 #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative;overflow:hidden}
 .tabbar{display:flex;background:var(--bg);border-top:0.5px solid var(--bd);padding-bottom:var(--safe);position:sticky;bottom:0;z-index:50;flex-shrink:0}
@@ -494,6 +500,7 @@ const DEF_REM = {enabled:true,showOverdue:true,showDueSoon:true,dueSoonDays:3,sh
 
 // ── State ─────────────────────────────────────────────────
 let DB, editId=null, pieChart=null, areaChart=null, listFilter='all';
+let _savedScroll=0;  // FIX 1: persists scroll position across form open/close
 let dirty        = {home:true,list:true,chart:true,trend:true};
 // FEATURE 3 BUG FIX: budget store uses numeric index keys, not category strings
 // Structure: { byIdx: {0:5000, 3:2000, ...}, total: 50000 }
@@ -718,10 +725,72 @@ function makeCard(x){
   const bCls=isAdv?(x.recovered===1?'g':'o'):(x.paid===1?'g':'r');
   const badge=document.createElement('span');badge.className=`badge ${bCls}`;badge.textContent=bText;
   right.append(amt,badge);row.append(chk,info,right);card.append(bg,row);
-  let sx=0,dx=0,sw=false;
-  row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;dx=0;sw=false;},{passive:true});
-  row.addEventListener('touchmove',e=>{const raw=e.touches[0].clientX-sx;if(Math.abs(raw)>6)sw=true;if(sw&&raw<0){dx=raw<-50?-50+(raw+50)*0.3:raw;dx=Math.max(dx,-72);row.style.transform=`translateX(${dx}px)`;}},{passive:true});
-  row.addEventListener('touchend',async()=>{if(dx<-40){row.style.transform='translateX(-72px)';if(confirm(`刪除「${x.name}」？`)){await delItem(x.id);dirtyAll();rHome();toast('已刪除');}else row.style.transform='';}else row.style.transform='';sw=false;});
+
+  // FIX 2: Directional-lock swipe-to-delete
+  // ─────────────────────────────────────────────────────────────────
+  // Three phases per touch gesture:
+  //   IDLE (0)        → touch just started, no direction committed yet
+  //   HORIZ_LOCK (1)  → confirmed horizontal intent → animate swipe, block scroll
+  //   VERT_LOCK (2)   → confirmed vertical intent → ignore entirely, let browser scroll
+  //
+  // Direction is committed only when the finger travels > COMMIT_PX pixels AND
+  // the horizontal/vertical ratio exceeds RATIO_THRESHOLD.
+  // This means a diagonal scroll (ratio ~1.0) stays IDLE longest and then
+  // resolves to vertical, preventing false-positive deletes.
+  const COMMIT_PX     = 18;   // minimum travel before committing direction
+  const RATIO_THRESH  = 2.0;  // |dx|/|dy| must exceed this to claim horizontal
+  const SWIPE_TRIGGER = 60;   // pixels to reveal delete zone (of 72px total)
+  const SWIPE_FULL    = 72;   // width of del-bg zone
+
+  const DIR = {IDLE:0, HORIZ:1, VERT:2};
+  let phase=DIR.IDLE, sx=0, sy=0, dx=0;
+
+  row.addEventListener('touchstart', e=>{
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    dx = 0;
+    phase = DIR.IDLE;
+  }, {passive:true});
+
+  // passive:false so we can call preventDefault() when horizontal is confirmed
+  row.addEventListener('touchmove', e=>{
+    const cx=e.touches[0].clientX, cy=e.touches[0].clientY;
+    const rawX=cx-sx, rawY=cy-sy;
+
+    if(phase===DIR.VERT) return;  // committed vertical — browser handles scroll
+
+    if(phase===DIR.IDLE){
+      const travel=Math.sqrt(rawX*rawX+rawY*rawY);
+      if(travel < COMMIT_PX) return;  // not enough movement to decide yet
+      const ratio=Math.abs(rawX)/Math.max(Math.abs(rawY),0.1);
+      if(ratio > RATIO_THRESH && rawX < 0){
+        phase=DIR.HORIZ;  // confirmed: deliberate left swipe
+      } else {
+        phase=DIR.VERT;   // vertical scroll wins — bail out completely
+        return;
+      }
+    }
+
+    // phase===DIR.HORIZ from here
+    e.preventDefault();  // block page scroll while swiping horizontally
+    dx = rawX < -50 ? -50+(rawX+50)*0.3 : rawX;
+    dx = Math.max(dx, -SWIPE_FULL);
+    if(dx < 0) row.style.transform=`translateX(${dx}px)`;
+  }, {passive:false});
+
+  row.addEventListener('touchend', async()=>{
+    if(phase===DIR.HORIZ && dx < -SWIPE_TRIGGER){
+      row.style.transform=`translateX(-${SWIPE_FULL}px)`;
+      if(confirm(`刪除「${x.name}」？`)){
+        await delItem(x.id); dirtyAll(); rHome(); toast('已刪除');
+      } else {
+        row.style.transform='';
+      }
+    } else {
+      row.style.transform='';
+    }
+    phase=DIR.IDLE; dx=0;
+  });
   return card;
 }
 
@@ -946,9 +1015,20 @@ async function openForm(id){
     document.getElementById('r-unrec').checked=true;document.getElementById('r-rec').checked=false;
   }
   document.getElementById('fs-form').classList.add('open');
+  // FIX 1: lock background viewport (position:fixed is required for iOS Safari)
+  _savedScroll = window.scrollY;
+  document.body.style.top = `-${_savedScroll}px`;
+  document.body.classList.add('scroll-lock');
   setTimeout(()=>document.getElementById('f-name').focus(),320);
 }
-function closeForm(){document.getElementById('fs-form').classList.remove('open');editId=null;}
+function closeForm(){
+  document.getElementById('fs-form').classList.remove('open');
+  editId=null;
+  // FIX 1: restore scroll position precisely
+  document.body.classList.remove('scroll-lock');
+  document.body.style.top='';
+  window.scrollTo(0,_savedScroll||0);
+}
 
 async function saveItem(){
   const name=document.getElementById('f-name').value.trim();
