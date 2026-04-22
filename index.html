@@ -555,7 +555,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   </div>
   <div class="search-wrap">
     <svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5L18 18"/></svg>
-    <input class="search-input" id="search" type="search" placeholder="搜尋項目或備註…" oninput="rList()">
+    <input class="search-input" id="search" type="search" placeholder="搜尋項目或備註…" oninput="debouncedSearch()">
   </div>
   <div class="filter-row">
     <button class="filter-btn on" id="fa" onclick="setF('all')">全部</button>
@@ -1088,10 +1088,21 @@ function makeCard(x){
 }
 
 // ── LIST ─────────────────────────────────────────────────
+// Debounce pattern: we create ONE timer reference outside the event handler.
+// Every keypress clears the previous timer and starts a fresh 220ms one.
+// Only the final keypress (after the user stops typing) fires rList().
+// 220ms is the sweet spot: fast enough to feel instant, slow enough to avoid
+// firing on every character of a Chinese input composition event (IME).
+let _searchTimer=null;
+function debouncedSearch(){
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(rList,220);
+}
+
 function setF(f){
   listFilter=f;
   ['fa','fu','fp','fv'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',['all','unpaid','paid','advance'][i]===f));
-  rList();
+  rList();   // filter tab switches are instant — no debounce needed here
 }
 async function rList(){
   dirty.list=false;
@@ -1185,13 +1196,33 @@ function openBudModal(){
   document.getElementById('bov').classList.add('on');
 }
 function saveBudgets(){
+  // 1. Write new values into the in-memory store (Observer pattern:
+  //    budStore is the single source of truth; all render functions
+  //    read from it directly, so updating it here is enough to
+  //    guarantee every screen shows consistent data.)
   budStore.total=getAmt('bt-r');
   getCats().forEach((_,idx)=>{
     const el=document.getElementById(`bd-r-${idx}`);if(!el)return;
     const v=parseInt(el.value)||0;
     if(v>0)budStore.byIdx[idx]=v;else delete budStore.byIdx[idx];
   });
-  saveBudStore();document.getElementById('bov').classList.remove('on');rChart();toast('預算已儲存');
+
+  // 2. Persist to localStorage so the value survives app reload
+  saveBudStore();
+
+  // 3. Close modal
+  document.getElementById('bov').classList.remove('on');
+
+  // 4. Immediate re-render of every screen that displays budget data.
+  //    rHome() updates the budget progress bar on the main dashboard.
+  //    rChart() updates the per-category budget rows and total bar.
+  //    dirty.trend = true defers the trend re-render until the user
+  //    actually visits that tab (lazy render — avoids wasted work).
+  rHome();
+  rChart();
+  dirty.trend=true;
+
+  toast('預算已儲存');
 }
 
 // ── TREND ────────────────────────────────────────────────
