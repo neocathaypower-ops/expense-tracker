@@ -773,7 +773,10 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 <script>
 'use strict';
 
-// ── Currency formatting ──────────────────────────────────
+// ── Security & Formatting ────────────────────────────────
+// 新增 XSS 防護函式，過濾使用者輸入的特殊字元
+const esc = str => String(str).replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[m]));
+
 const NF  = new Intl.NumberFormat('zh-TW', {maximumFractionDigits:0});
 const fmt  = n => '$' + NF.format(Math.round(n||0));
 const fmtN = n => NF.format(Math.round(n||0));
@@ -835,7 +838,7 @@ function toast(msg){
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2300);
 }
 
-// ── IndexedDB ────────────────────────────────────────────
+// ── IndexedDB (Optimized Layers) ─────────────────────────
 function openDB(){
   return new Promise((res,rej)=>{
     const r=indexedDB.open('expense_v8',1);
@@ -850,6 +853,11 @@ function openDB(){
 }
 const store=m=>DB.transaction('items',m).objectStore('items');
 const getAll=()=>new Promise(res=>{store('readonly').getAll().onsuccess=e=>res(e.target.result||[]);});
+
+// 新增：利用 Index 進行 O(1) 範圍查詢，避免每次都撈出全部資料過濾
+const getByYM=(ym)=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.only(ym)).onsuccess=e=>res(e.target.result||[]);});
+const getByRange=(from,to)=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.bound(from,to)).onsuccess=e=>res(e.target.result||[]);});
+
 const putItem=item=>new Promise(res=>{
   const r=store('readwrite').put(item);
   r.onsuccess=e=>{if(!item.id)item.id=e.target.result;res(item);};
@@ -870,8 +878,6 @@ function buildSelects(){
   const yOS=yrs.map(yr=>`<option value="${yr}"${yr===nowY?' selected':''}>${yr}</option>`).join('');
   ['rf-y','rt-y'].forEach(id=>{const s=document.getElementById(id);if(s)s.innerHTML=yOS;});
   ['rf-m','rt-m'].forEach(id=>{const s=document.getElementById(id);if(s){s.innerHTML=mO;s.value=nowM;}});
-  const tn=document.getElementById('ty');
-  if(tn)tn.innerHTML=yOS;
 }
 const curYM=()=>({y:+document.getElementById('hy').value,m:+document.getElementById('hm').value});
 function shiftM(d){
@@ -892,7 +898,7 @@ const dirtyAll=()=>Object.keys(dirty).forEach(k=>dirty[k]=true);
 
 function refreshCatSel(){
   const cats=getCats(),sel=document.getElementById('f-cat'),cur=sel.value;
-  sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
   if(cats.includes(cur))sel.value=cur;
 }
 function onTypeChange(){
@@ -914,6 +920,7 @@ function getRangeYM(){
 // ── Reminders ────────────────────────────────────────────
 async function buildRems(){
   if(!remCfg.enabled)return[];
+  // 提醒功能涉及跨月份逾期，仍需 getAll()
   const all=await getAll(),td=today(),thr=addDays(td,remCfg.dueSoonDays);
   const rems=[];
   all.forEach(x=>{
@@ -927,6 +934,7 @@ async function buildRems(){
   rems.sort((a,b)=>{const o={overdue:0,'due-soon':1,advance:2};return o[a.type]!==o[b.type]?o[a.type]-o[b.type]:(a.diff!==null&&b.diff!==null?a.diff-b.diff:0);});
   return rems;
 }
+
 function renderRems(rems,max){
   max=max||5;
   const wrap=document.getElementById('reminder-wrap');
@@ -934,13 +942,17 @@ function renderRems(rems,max){
   const n=rems.length;
   if(n>0){badge.textContent=n>9?'9+':n;badge.style.display='';}else badge.style.display='none';
   if(!n||!remCfg.enabled||remDismissed===today()){wrap.innerHTML='';return;}
+  
   const sec=document.createElement('div');sec.className='rem-box';
   const hdr=document.createElement('div');hdr.className='rem-hdr';
   const htl=document.createElement('div');htl.className='rem-hdr-lbl';
   htl.innerHTML=`<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>待處理提醒（${n}）`;
+  
   const dis=document.createElement('button');dis.className='rem-dismiss';dis.textContent='今日不顯示';
   dis.onclick=()=>{remDismissed=today();localStorage.setItem('ep_rem_dis',remDismissed);wrap.innerHTML='';badge.style.display='none';};
   hdr.append(htl,dis);sec.appendChild(hdr);
+  
+  const frag = document.createDocumentFragment();
   rems.slice(0,max).forEach(r=>{
     const row=document.createElement('div');row.className=`rem-row ${r.type}`;
     row.onclick=()=>openForm(r.item.id);
@@ -948,18 +960,28 @@ function renderRems(rems,max){
     if(r.type==='overdue'){ic='r';sv='<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/>';meta=`逾期 ${Math.abs(r.diff)} 天 · ${r.item.cat}`;ac='r';}
     else if(r.type==='due-soon'){ic='a';sv='<circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>';meta=r.diff===0?`今天到期 · ${r.item.cat}`:`${r.diff} 天後到期 · ${r.item.date}`;ac='a';}
     else{ic='o';sv='<circle cx="12" cy="12" r="10"/><path d="M16 8l-4 4-4-4"/><path d="M12 12v5"/>';meta=`${r.item.payee?'代墊：'+r.item.payee:'代墊未收回'} · ${r.item.ym}`;ac='o';}
-    row.innerHTML=`<div class="rem-ico ${ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${sv}</svg></div><div class="rem-body"><div class="rem-name">${r.item.name}</div><div class="rem-meta">${meta}</div></div><div class="rem-amt ${ac}">${fmt(r.item.amount)}</div>`;
-    sec.appendChild(row);
+    // 加入 XSS esc() 防護
+    row.innerHTML=`<div class="rem-ico ${ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${sv}</svg></div><div class="rem-body"><div class="rem-name">${esc(r.item.name)}</div><div class="rem-meta">${esc(meta)}</div></div><div class="rem-amt ${ac}">${fmt(r.item.amount)}</div>`;
+    frag.appendChild(row);
   });
-  if(n>max){const m=document.createElement('div');m.style.cssText='text-align:center;font-size:12px;color:var(--text3);padding:4px 0';m.textContent=`還有 ${n-max} 筆…`;sec.appendChild(m);}
+  
+  if(n>max){
+    const m=document.createElement('div');
+    m.style.cssText='text-align:center;font-size:12px;color:var(--text3);padding:4px 0';
+    m.textContent=`還有 ${n-max} 筆…`;
+    frag.appendChild(m);
+  }
+  sec.appendChild(frag);
   wrap.innerHTML='';wrap.appendChild(sec);
 }
 
 // ── HOME ─────────────────────────────────────────────────
 async function rHome(){
   dirty.home=false;
-  const{y,m}=curYM(),key=ymStr(y,m),all=await getAll();
-  const items=all.filter(x=>x.ym===key);
+  const{y,m}=curYM(),key=ymStr(y,m);
+  
+  // 優化：直接從資料庫撈取當月資料，不載入全部
+  const items = await getByYM(key);
   const normal=items.filter(x=>x.itype!=='advance');
   const advance=items.filter(x=>x.itype==='advance');
   const total=normal.reduce((s,x)=>s+x.amount,0);
@@ -988,7 +1010,8 @@ async function rHome(){
   const rems=await buildRems();renderRems(rems,3);
 
   const prevM=m===1?12:m-1,prevY=m===1?y-1:y;
-  const prevItems=all.filter(x=>x.ym===ymStr(prevY,prevM));
+  // 優化：直接撈取上個月資料
+  const prevItems=await getByYM(ymStr(prevY,prevM));
   document.getElementById('copy-wrap').innerHTML=(!items.length&&prevItems.length)
     ?`<div class="copy-banner" onclick="copyPrev()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><p>複製上月 <strong>${prevItems.length} 筆</strong>到本月？</p><span>複製</span></div>`:'';
 
@@ -1009,23 +1032,29 @@ async function rHome(){
     </div>`;
     return;
   }
+  
   el.innerHTML='';
+  // 優化：使用 DocumentFragment 減少 DOM 重繪
+  const frag = document.createDocumentFragment();
+  
   if(advance.filter(x=>x.recovered!==1).length){
     const unrec=advance.filter(x=>x.recovered!==1);
     const b=document.createElement('div');b.className='adv-banner';
     b.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p>本月有 <strong>${unrec.length} 筆代墊款</strong>（共 ${fmt(unrec.reduce((s,x)=>s+x.amount,0))}）尚未收回</p>`;
-    el.appendChild(b);
+    frag.appendChild(b);
   }
+  
   const cats={};
   normal.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>(cats[x.cat]=cats[x.cat]||[]).push(x));
   Object.keys(cats).forEach(cat=>{
-    const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent=cat;el.appendChild(lbl);
-    cats[cat].forEach(x=>el.appendChild(makeCard(x)));
+    const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent=cat;frag.appendChild(lbl);
+    cats[cat].forEach(x=>frag.appendChild(makeCard(x)));
   });
   if(advance.length){
-    const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent='代墊款';el.appendChild(lbl);
-    advance.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>el.appendChild(makeCard(x)));
+    const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent='代墊款';frag.appendChild(lbl);
+    advance.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>frag.appendChild(makeCard(x)));
   }
+  el.appendChild(frag);
 }
 
 // ── Item card (swipe-to-delete) ──────────────────────────
@@ -1034,6 +1063,7 @@ function makeCard(x){
   const card=document.createElement('div');card.className='icard';
   const bg=document.createElement('div');bg.className='del-bg';
   bg.innerHTML='<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除';
+  
   const row=document.createElement('div');row.className='irow';
   const chk=document.createElement('input');chk.type='checkbox';chk.className='ichk';
   if(isAdv){
@@ -1043,23 +1073,26 @@ function makeCard(x){
     chk.checked=x.paid===1;
     chk.addEventListener('change',async()=>{x.paid=chk.checked?1:0;await putItem(x);dirtyAll();rHome();toast(chk.checked?'已標記繳納 ✓':'已取消繳納');});
   }
+  
   const info=document.createElement('div');info.className='iinfo';info.addEventListener('click',()=>openForm(x.id));
   const isDone=isAdv?x.recovered===1:x.paid===1;
   const nm=document.createElement('div');nm.className='iname'+(isDone?' done':'');
   nm.appendChild(document.createTextNode(x.name));
   if(!isDone&&x.date&&x.date<today()){const dot=document.createElement('span');dot.className='overdue-dot';nm.appendChild(dot);}
   info.appendChild(nm);
+  
   const subs=[];if(isAdv&&x.payee)subs.push('代墊：'+x.payee);if(x.date)subs.push(x.date);if(x.note)subs.push(x.note);
   if(subs.length){const st=document.createElement('div');st.className='isub';st.textContent=subs.join('　');info.appendChild(st);}
+  
   const right=document.createElement('div');right.className='iright';
   const ac=isAdv?(x.recovered===1?'g':'o'):(x.paid===1?'g':'r');
   const amt=document.createElement('div');amt.className=`iamt ${ac}`;amt.textContent=fmt(x.amount);
   const bt=isAdv?(x.recovered===1?'已收回':'代墊中'):(x.paid===1?'已繳':'未繳');
   const bc=isAdv?(x.recovered===1?'g':'o'):(x.paid===1?'g':'r');
   const badge=document.createElement('span');badge.className=`badge ${bc}`;badge.textContent=bt;
+  
   right.append(amt,badge);row.append(chk,info,right);card.append(bg,row);
 
-  // Directional-lock swipe-to-delete
   const DIR={IDLE:0,HORIZ:1,VERT:2};
   let phase=DIR.IDLE,sx=0,sy=0,dx=0;
   const COMMIT=18,RATIO=2.0,TRIGGER=60,FULL=70;
@@ -1087,14 +1120,10 @@ function makeCard(x){
   return card;
 }
 
-// ── LIST ─────────────────────────────────────────────────
-// Debounce pattern: we create ONE timer reference outside the event handler.
-// Every keypress clears the previous timer and starts a fresh 220ms one.
-// Only the final keypress (after the user stops typing) fires rList().
-// 220ms is the sweet spot: fast enough to feel instant, slow enough to avoid
-// firing on every character of a Chinese input composition event (IME).
-let _searchTimer=null;
+// ── LIST & Search (Optimized IME Handling) ───────────────
+let _searchTimer=null, isComposing=false;
 function debouncedSearch(){
+  if(isComposing) return; // 避免中文選字過程中頻繁觸發刷新
   clearTimeout(_searchTimer);
   _searchTimer=setTimeout(rList,220);
 }
@@ -1102,47 +1131,60 @@ function debouncedSearch(){
 function setF(f){
   listFilter=f;
   ['fa','fu','fp','fv'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',['all','unpaid','paid','advance'][i]===f));
-  rList();   // filter tab switches are instant — no debounce needed here
+  rList();
 }
 async function rList(){
   dirty.list=false;
   const{from,to}=getRangeYM();
   const q=document.getElementById('search').value.trim().toLowerCase();
-  const all=await getAll();
-  let items=all.filter(x=>x.ym&&x.ym>=from&&x.ym<=to);
+  
+  // 優化：只撈取指定時間範圍內的資料
+  let items = await getByRange(from, to);
+  
   if(listFilter==='paid')items=items.filter(x=>x.paid===1&&x.itype!=='advance');
   else if(listFilter==='unpaid')items=items.filter(x=>x.paid!==1&&x.itype!=='advance');
   else if(listFilter==='advance')items=items.filter(x=>x.itype==='advance');
+  
   if(q)items=items.filter(x=>(x.name||'').toLowerCase().includes(q)||(x.note||'').toLowerCase().includes(q)||(x.payee||'').toLowerCase().includes(q));
   items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  
   document.getElementById('range-info').textContent=`${from===to?from:from+' ~ '+to}，共 ${items.length} 筆`;
   const el=document.getElementById('list-items');
-  if(!items.length){el.innerHTML=`<div class="empty-msg">${q?`找不到「${q}」`:'無符合條件的項目'}</div>`;return;}
+  
+  if(!items.length){el.innerHTML=`<div class="empty-msg">${q?`找不到「${esc(q)}」`:'無符合條件的項目'}</div>`;return;}
+  
   el.innerHTML='';
-  items.forEach(x=>el.appendChild(makeCard(x)));
+  // 優化：使用 DocumentFragment
+  const frag = document.createDocumentFragment();
+  items.forEach(x=>frag.appendChild(makeCard(x)));
+  
   const amt=items.filter(x=>x.itype!=='advance').reduce((s,x)=>s+x.amount,0);
   const foot=document.createElement('div');foot.className='list-footer';
   foot.textContent=`共 ${items.length} 筆　合計 ${fmt(amt)}`;
-  el.appendChild(foot);
+  frag.appendChild(foot);
+  el.appendChild(frag);
 }
 
 // ── CHART ────────────────────────────────────────────────
 async function rChart(){
   dirty.chart=false;
   const y=+document.getElementById('cy2').value,m=+document.getElementById('cm2').value;
-  const all=await getAll(),items=all.filter(x=>x.ym===ymStr(y,m));
+  
+  // 優化：直接獲取單月資料
+  const items = await getByYM(ymStr(y,m));
   const normal=items.filter(x=>x.itype!=='advance'),advance=items.filter(x=>x.itype==='advance');
+  
   const catMap={};normal.forEach(x=>catMap[x.cat]=(catMap[x.cat]||0)+x.amount);
   const cats=Object.keys(catMap),vals=cats.map(c=>catMap[c]);
   const total=vals.reduce((s,v)=>s+v,0);
   const paidCnt=normal.filter(x=>x.paid===1).length;
   const advUnrec=advance.filter(x=>x.recovered!==1);
+  
   document.getElementById('cc').textContent=normal.length;
   document.getElementById('cp').textContent=normal.length?Math.round(paidCnt/normal.length*100)+'%':'—';
   document.getElementById('ca').textContent=advance.length;
   document.getElementById('cam').textContent=fmt(advUnrec.reduce((s,x)=>s+x.amount,0));
 
-  // Total budget card
   const totalSpent=normal.reduce((s,x)=>s+x.amount,0);
   const totalBudget=budStore.total||0;
   document.getElementById('bud-spent-txt').textContent=fmt(totalSpent);
@@ -1157,7 +1199,6 @@ async function rChart(){
     document.getElementById('bud-total-bar').style.width='0%';
   }
 
-  // Pie chart
   const canvas=document.getElementById('pie');
   if(pieChart){pieChart.destroy();pieChart=null;}
   if(!cats.length){
@@ -1167,11 +1208,13 @@ async function rChart(){
     const colors=cats.map((_,i)=>PIE_COLORS[i%PIE_COLORS.length]);
     pieChart=new Chart(canvas,{type:'doughnut',data:{labels:cats,datasets:[{data:vals,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},options:{cutout:'58%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)} (${Math.round(ctx.raw/total*100)}%)`}}}}});
     const leg=document.getElementById('pie-leg');leg.innerHTML='';
-    cats.forEach((c,i)=>{const li=document.createElement('div');li.className='leg-item';li.innerHTML=`<div class="leg-dot" style="background:${colors[i]}"></div>${c}<span style="margin-left:auto;font-weight:700;color:var(--text)">${Math.round(catMap[c]/total*100)}%</span>`;leg.appendChild(li);});
+    const frag = document.createDocumentFragment();
+    cats.forEach((c,i)=>{const li=document.createElement('div');li.className='leg-item';li.innerHTML=`<div class="leg-dot" style="background:${colors[i]}"></div>${esc(c)}<span style="margin-left:auto;font-weight:700;color:var(--text)">${Math.round(catMap[c]/total*100)}%</span>`;frag.appendChild(li);});
+    leg.appendChild(frag);
   }
 
-  // Category budget rows
   const bEl=document.getElementById('bud-cat-rows');bEl.innerHTML='';let any=false;
+  const bFrag = document.createDocumentFragment();
   getCats().forEach((cat,idx)=>{
     const spent=catMap[cat]||0,limit=budStore.byIdx[idx]||0;
     if(!spent&&!limit)return;any=true;
@@ -1179,49 +1222,36 @@ async function rChart(){
     const over=limit>0&&spent>limit;
     const color=over?'var(--red)':pct>80?'var(--amber)':'var(--green)';
     const d=document.createElement('div');
-    d.innerHTML=`<div class="bud-cat-row"><span style="color:var(--text2)">${cat}</span><span style="color:${over?'var(--red)':'var(--text2)'}"><strong>${fmt(spent)}</strong>${limit?' / '+fmt(limit):''}</span></div>${limit?`<div class="bud-cat-track"><div class="bud-cat-fill" style="width:${pct}%;background:${color}"></div></div>`:''}`;
-    bEl.appendChild(d);
+    d.innerHTML=`<div class="bud-cat-row"><span style="color:var(--text2)">${esc(cat)}</span><span style="color:${over?'var(--red)':'var(--text2)'}"><strong>${fmt(spent)}</strong>${limit?' / '+fmt(limit):''}</span></div>${limit?`<div class="bud-cat-track"><div class="bud-cat-fill" style="width:${pct}%;background:${color}"></div></div>`:''}`;
+    bFrag.appendChild(d);
   });
-  if(!any)bEl.innerHTML='<div style="font-size:13px;color:var(--text3)">本月無支出，或尚未設定預算</div>';
+  if(!any){bEl.innerHTML='<div style="font-size:13px;color:var(--text3)">本月無支出，或尚未設定預算</div>';}
+  else{bEl.appendChild(bFrag);}
 }
+
 function openBudModal(){
   const el=document.getElementById('b-fields');el.innerHTML='';
   setAmt('bt-r','bt-d',budStore.total||0);
+  const frag = document.createDocumentFragment();
   getCats().forEach((cat,idx)=>{
     const cur=budStore.byIdx[idx]||0;
     const div=document.createElement('div');div.className='field';
-    div.innerHTML=`<label>${cat}</label><div class="amt-wrap" onclick="document.getElementById('bd-r-${idx}').focus()"><span class="amt-unit">$</span><span class="amt-disp${cur>0?'':' ph'}" id="bd-d-${idx}">${cur>0?fmtN(cur):'0'}</span><input class="amt-input" id="bd-r-${idx}" type="number" inputmode="numeric" min="0" step="1" value="${cur||''}" oninput="syncAmt('bd-r-${idx}','bd-d-${idx}')" onfocus="this.select()"></div>`;
-    el.appendChild(div);
+    div.innerHTML=`<label>${esc(cat)}</label><div class="amt-wrap" onclick="document.getElementById('bd-r-${idx}').focus()"><span class="amt-unit">$</span><span class="amt-disp${cur>0?'':' ph'}" id="bd-d-${idx}">${cur>0?fmtN(cur):'0'}</span><input class="amt-input" id="bd-r-${idx}" type="number" inputmode="numeric" min="0" step="1" value="${cur||''}" oninput="syncAmt('bd-r-${idx}','bd-d-${idx}')" onfocus="this.select()"></div>`;
+    frag.appendChild(div);
   });
+  el.appendChild(frag);
   document.getElementById('bov').classList.add('on');
 }
 function saveBudgets(){
-  // 1. Write new values into the in-memory store (Observer pattern:
-  //    budStore is the single source of truth; all render functions
-  //    read from it directly, so updating it here is enough to
-  //    guarantee every screen shows consistent data.)
   budStore.total=getAmt('bt-r');
   getCats().forEach((_,idx)=>{
     const el=document.getElementById(`bd-r-${idx}`);if(!el)return;
     const v=parseInt(el.value)||0;
     if(v>0)budStore.byIdx[idx]=v;else delete budStore.byIdx[idx];
   });
-
-  // 2. Persist to localStorage so the value survives app reload
   saveBudStore();
-
-  // 3. Close modal
   document.getElementById('bov').classList.remove('on');
-
-  // 4. Immediate re-render of every screen that displays budget data.
-  //    rHome() updates the budget progress bar on the main dashboard.
-  //    rChart() updates the per-category budget rows and total bar.
-  //    dirty.trend = true defers the trend re-render until the user
-  //    actually visits that tab (lazy render — avoids wasted work).
-  rHome();
-  rChart();
-  dirty.trend=true;
-
+  rHome(); rChart(); dirty.trend=true;
   toast('預算已儲存');
 }
 
@@ -1237,13 +1267,15 @@ async function rTrend(){
   if(!selYears.length){selYears=[nowY];saveSelYrs();}
 
   const chipsEl=document.getElementById('yr-chips');chipsEl.innerHTML='';
+  const cFrag = document.createDocumentFragment();
   dataYears.forEach(yr=>{
     const on=selYears.includes(yr),pal=YR_PAL[dataYears.indexOf(yr)%YR_PAL.length];
     const chip=document.createElement('button');chip.className='yr-chip'+(on?' on':'');
     if(on)chip.style.background=pal.line;
     chip.innerHTML=`<span class="yr-chip-dot" style="background:${on?'#fff':pal.line}"></span>${yr}年`;
-    chip.onclick=()=>toggleYear(yr,dataYears);chipsEl.appendChild(chip);
+    chip.onclick=()=>toggleYear(yr,dataYears);cFrag.appendChild(chip);
   });
+  chipsEl.appendChild(cFrag);
 
   const labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   const datasets=selYears.map(yr=>{
@@ -1296,6 +1328,7 @@ async function openForm(id){
   document.getElementById('fs-title').textContent=id?'編輯費用項目':'新增費用項目';
   document.getElementById('fs-del').style.display=id?'':'none';
   if(id){
+    // 這裡只需要撈一筆，不影響大局
     const all=await getAll(),x=all.find(a=>a.id===id);if(!x)return;
     const isAdv=x.itype==='advance';
     document.getElementById('rt-advance').checked=isAdv;
@@ -1328,8 +1361,13 @@ async function openForm(id){
   _savedScroll=window.scrollY;
   document.body.style.top=`-${_savedScroll}px`;
   document.body.classList.add('locked');
-  setTimeout(()=>document.getElementById('f-name').focus(),320);
+  
+  // 優化：取消手機版自動 focus 導致鍵盤彈出畫面閃動，保留電腦版 (大於 480px) focus
+  if (window.innerWidth > 480) {
+    setTimeout(() => document.getElementById('f-name').focus(), 320);
+  }
 }
+
 function closeForm(){
   document.getElementById('fsform').classList.remove('on');
   editId=null;
@@ -1368,7 +1406,7 @@ async function confirmDel(){
 // ── Copy prev month ──────────────────────────────────────
 async function copyPrev(){
   const{y,m}=curYM(),prevM=m===1?12:m-1,prevY=m===1?y-1:y;
-  const all=await getAll(),prev=all.filter(x=>x.ym===ymStr(prevY,prevM));if(!prev.length)return;
+  const prev=await getByYM(ymStr(prevY,prevM));if(!prev.length)return;
   for(const x of prev)await putItem({...x,id:undefined,date:'',paid:x.itype==='advance'?1:0,recovered:0,ym:ymStr(y,m)});
   dirtyAll();rHome();toast(`已複製 ${prev.length} 筆項目`);
 }
@@ -1377,7 +1415,7 @@ async function copyPrev(){
 function openCatModal(){renderCatTags();document.getElementById('new-cat').value='';document.getElementById('cov').classList.add('on');}
 function renderCatTags(){
   const el=document.getElementById('cat-tags');el.innerHTML='';
-  getCats().forEach(cat=>{const tag=document.createElement('div');tag.className='cat-tag';const safe=cat.replace(/'/g,"\\'");tag.innerHTML=`${cat}<svg class="cat-del" viewBox="0 0 14 14" onclick="delCat('${safe}',event)"><path d="M2 2l10 10M12 2L2 12"/></svg>`;el.appendChild(tag);});
+  getCats().forEach(cat=>{const tag=document.createElement('div');tag.className='cat-tag';const safe=cat.replace(/'/g,"\\'");tag.innerHTML=`${esc(cat)}<svg class="cat-del" viewBox="0 0 14 14" onclick="delCat('${safe}',event)"><path d="M2 2l10 10M12 2L2 12"/></svg>`;el.appendChild(tag);});
 }
 function addCat(){const inp=document.getElementById('new-cat'),name=inp.value.trim();if(!name)return;if(userCats.includes(name)){toast('類別已存在');return;}if(userCats.length>=12){toast('最多 12 個類別');return;}userCats.push(name);saveCats();renderCatTags();inp.value='';toast(`已新增「${name}」`);}
 function delCat(cat,e){if(e)e.stopPropagation();if(userCats.length<=1){toast('至少保留一個類別');return;}if(!confirm(`刪除「${cat}」？`))return;userCats=userCats.filter(c=>c!==cat);saveCats();renderCatTags();}
@@ -1422,9 +1460,10 @@ async function importFile(e){
   e.target.value='';
 }
 
-// ── SW & Manifest ────────────────────────────────────────
+// ── SW & Manifest (Optimized Caching) ────────────────────
 if('serviceWorker' in navigator){
-  const sw=`const C='ep-v8';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>{const f=fetch(e.request).then(res=>{if(res.ok)c.put(e.request,res.clone());return res;}).catch(()=>r);return r||f;})));});`;
+  // 優化：在 Service Worker 安裝時預先快取 Chart.js CDN，保證斷網可用性
+  const sw=`const C='ep-v8.1';self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.add('https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js').catch(()=>{})))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>{const f=fetch(e.request).then(res=>{if(res.ok)c.put(e.request,res.clone());return res;}).catch(()=>r);return r||f;})));});`;
   navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
 }
 (function(){
@@ -1436,6 +1475,15 @@ if('serviceWorker' in navigator){
 openDB().then(()=>{
   buildSelects();
   refreshCatSel();
+  
+  // 優化：處理中文輸入法 (IME) 的搜尋防抖事件
+  const sInput = document.getElementById('search');
+  if(sInput) {
+    sInput.addEventListener('compositionstart', () => isComposing = true);
+    sInput.addEventListener('compositionend', () => { isComposing = false; debouncedSearch(); });
+    // 保留原本 HTML 的 oninput，透過 isComposing 旗標來攔截
+  }
+
   rHome();
 });
 </script>
