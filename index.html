@@ -492,6 +492,38 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .export-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}
 .export-btn{height:38px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;font-size:13px}
 
+/* ── Settings screen ─────────────────────────────────────── */
+.settings-group{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden}
+.settings-group-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:12px 14px 6px}
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 14px;border-top:0.5px solid var(--border);cursor:pointer;
+}
+.settings-row:first-of-type{border-top:none}
+.settings-row:active{background:var(--surface)}
+.settings-row-lbl{font-size:15px;color:var(--text)}
+.settings-row-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.settings-row-right{display:flex;align-items:center;gap:6px;color:var(--text3)}
+.settings-row-right svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.settings-row-val{font-size:14px;color:var(--text2)}
+/* App info card at bottom of settings */
+.app-info-card{
+  background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px 14px;
+  text-align:center;margin-top:20px;
+}
+.app-info-icon{
+  width:60px;height:60px;background:var(--green);border-radius:16px;
+  margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
+}
+.app-info-icon svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.app-info-name{font-size:17px;font-weight:700;margin-bottom:4px}
+.app-info-version{font-size:13px;color:var(--text3);margin-bottom:14px}
+.app-info-rows{border-top:0.5px solid var(--border);padding-top:12px}
+.app-info-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}
+.app-info-row span:first-child{color:var(--text3)}
+.app-info-row span:last-child{color:var(--text);font-weight:500}
+
 /* ── Toast ───────────────────────────────────────────────── */
 .toast{
   position:fixed;bottom:calc(68px + var(--safe-b) + 10px);
@@ -610,24 +642,95 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <div class="chart-legend" id="chart-legend"></div>
     </div>
     <div class="trend-stat-row" id="trend-stats"></div>
-    <div class="card">
-      <div class="card-title">備份與匯出</div>
-      <div class="export-row">
-        <button class="export-btn" onclick="exportJSON()">&#8595; JSON</button>
-        <button class="export-btn" onclick="exportCSV()">&#8595; CSV</button>
-        <button class="export-btn" onclick="document.getElementById('imp').click()">&#8593; 匯入</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SETTINGS SCREEN ════════════════ -->
+<div id="s-settings" class="screen">
+  <div class="top-bar">
+    <div class="top-bar-title">設定</div>
+  </div>
+  <div class="scroll-body">
+
+    <!-- Group 1: Data Management -->
+    <div class="settings-group-title">資料管理</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="exportJSON()">
+        <div>
+          <div class="settings-row-lbl">匯出 JSON 備份</div>
+          <div class="settings-row-sub">完整備份，可還原所有資料</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+      </div>
+      <div class="settings-row" onclick="exportCSV()">
+        <div>
+          <div class="settings-row-lbl">匯出 CSV</div>
+          <div class="settings-row-sub">可用 Excel / Numbers 開啟分析</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+      </div>
+      <div class="settings-row" onclick="document.getElementById('imp').click()">
+        <div>
+          <div class="settings-row-lbl">匯入備份</div>
+          <div class="settings-row-sub">從 JSON 或 CSV 還原資料</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 14 12 9 17 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+        </div>
       </div>
       <input type="file" id="imp" accept=".json,.csv" style="display:none" onchange="importFile(event)">
-      <p style="font-size:11px;color:var(--text3);line-height:1.6">JSON 完整備份還原；CSV 可用 Excel 分析</p>
     </div>
-    <div class="card">
-      <div class="card-title">自訂類別 <a onclick="openCatModal()">管理</a></div>
-      <div id="cat-preview" style="font-size:13px;color:var(--text2);line-height:1.8"></div>
+
+    <!-- Group 2: Preferences -->
+    <div class="settings-group-title">偏好設定</div>
+    <div class="settings-group">
+      <div class="settings-row" onclick="openCatModal()">
+        <div>
+          <div class="settings-row-lbl">費用類別管理</div>
+          <div class="settings-row-sub" id="cat-preview-settings">—</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="settings-row" onclick="openBudModal()">
+        <div>
+          <div class="settings-row-lbl">預算設定</div>
+          <div class="settings-row-sub" id="bud-preview-settings">點此設定每月預算上限</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
+      <div class="settings-row" onclick="openRemindModal()">
+        <div>
+          <div class="settings-row-lbl">到期提醒設定</div>
+          <div class="settings-row-sub" id="remind-preview-settings">—</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">提醒設定 <a onclick="openRemindModal()">設定</a></div>
-      <div id="remind-preview" style="font-size:13px;color:var(--text2)"></div>
+
+    <!-- App Info -->
+    <div class="app-info-card">
+      <div class="app-info-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <div class="app-info-name">費用管理</div>
+      <div class="app-info-version">個人記帳 PWA</div>
+      <div class="app-info-rows">
+        <div class="app-info-row"><span>版本</span><span>v1.0.0</span></div>
+        <div class="app-info-row"><span>建置日期</span><span>2026/04/24</span></div>
+        <div class="app-info-row"><span>開發者</span><span>Henry</span></div>
+      </div>
     </div>
+
   </div>
 </div>
 
@@ -645,6 +748,9 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   </button>
   <button class="tab" id="tab-trend" onclick="showS('trend')">
     <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/></svg>趨勢
+  </button>
+  <button class="tab" id="tab-settings" onclick="showS('settings')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定
   </button>
 </div>
 </div><!-- #app -->
@@ -750,7 +856,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <button onclick="addCat()">新增</button>
     </div>
     <div class="sheet-btns" style="margin-top:14px">
-      <button class="btn primary" onclick="document.getElementById('cov').classList.remove('on');refreshCatSel();rTrend()">完成</button>
+      <button class="btn primary" onclick="document.getElementById('cov').classList.remove('on');refreshCatSel();rTrend();rSettings()">完成</button>
     </div>
   </div>
 </div>
@@ -1252,6 +1358,7 @@ function saveBudgets(){
   saveBudStore();
   document.getElementById('bov').classList.remove('on');
   rHome(); rChart(); dirty.trend=true;
+  rSettings();
   toast('預算已儲存');
 }
 
@@ -1298,8 +1405,10 @@ async function rTrend(){
     const avg=active.length?yTotal/active.length:0;
     statsEl.innerHTML+=`<div class="stat-tile" style="border-top:3px solid ${pal.line}"><div class="stat-lbl">${yr} 年總支出</div><div class="stat-val">${fmt(yTotal)}</div></div><div class="stat-tile" style="border-top:3px solid ${pal.line}"><div class="stat-lbl">${yr} 月均</div><div class="stat-val">${fmt(avg)}</div></div>`;
   });
-  document.getElementById('cat-preview').textContent=getCats().join('、');
-  document.getElementById('remind-preview').textContent=remCfg.enabled?`已啟用 · 提前 ${remCfg.dueSoonDays} 天提醒`:'已停用';
+  document.getElementById('cat-preview') && (document.getElementById('cat-preview').textContent=getCats().join('、'));
+  document.getElementById('remind-preview') && (document.getElementById('remind-preview').textContent=remCfg.enabled?`已啟用 · 提前 ${remCfg.dueSoonDays} 天提醒`:'已停用');
+  // Also keep settings screen in sync if it was previously visited
+  rSettings();
 }
 function toggleYear(yr,dataYears){
   if(selYears.includes(yr)){if(selYears.length<=1){toast('至少選擇一個年份');return;}selYears=selYears.filter(y=>y!==yr);}
@@ -1308,18 +1417,35 @@ function toggleYear(yr,dataYears){
 }
 
 // ── Navigation ───────────────────────────────────────────
-const SCREENS=['home','list','chart','trend'];
+const SCREENS=['home','list','chart','trend','settings'];
 function showS(name){
   SCREENS.forEach(s=>{
     document.getElementById('s-'+s).classList.toggle('on',s===name);
     document.getElementById('tab-'+s).classList.toggle('on',s===name);
   });
+  // FAB only on home screen
   document.getElementById('fab').classList.toggle('on',name==='home');
   window.scrollTo(0,0);
   if(name==='chart'&&dirty.chart)rChart();
   else if(name==='trend'&&dirty.trend)rTrend();
   else if(name==='list'&&dirty.list)rList();
   else if(name==='home'&&dirty.home)rHome();
+  else if(name==='settings')rSettings();
+}
+
+// ── Settings render ──────────────────────────────────────
+// Refreshes the Settings screen's preview texts whenever it is visited
+// or whenever categories / reminders / budget are updated.
+function rSettings(){
+  // Category preview
+  const cp=document.getElementById('cat-preview-settings');
+  if(cp) cp.textContent=getCats().join('、');
+  // Reminder preview
+  const rp=document.getElementById('remind-preview-settings');
+  if(rp) rp.textContent=remCfg.enabled?`已啟用 · 提前 ${remCfg.dueSoonDays} 天提醒`:'已停用';
+  // Budget preview
+  const bp=document.getElementById('bud-preview-settings');
+  if(bp) bp.textContent=budStore.total>0?`每月上限 ${fmt(budStore.total)}`:'尚未設定';
 }
 
 // ── Full-screen form ─────────────────────────────────────
@@ -1436,7 +1562,7 @@ function saveRemindSettings(){
   remCfg.dueSoonDays=parseInt(document.getElementById('rs-days').value);
   saveRemCfg();document.getElementById('rsov').classList.remove('on');
   remDismissed='';localStorage.removeItem('ep_rem_dis');
-  dirtyAll();rHome();toast('提醒設定已儲存');
+  dirtyAll();rHome();rSettings();toast('提醒設定已儲存');
 }
 
 // ── Export / Import ──────────────────────────────────────
@@ -1475,6 +1601,7 @@ if('serviceWorker' in navigator){
 openDB().then(()=>{
   buildSelects();
   refreshCatSel();
+  rSettings();  // populate settings previews on first load
   
   // 優化：處理中文輸入法 (IME) 的搜尋防抖事件
   const sInput = document.getElementById('search');
