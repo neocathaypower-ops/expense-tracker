@@ -147,7 +147,45 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .card-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
 .card-title a{font-size:12px;color:var(--blue);font-weight:400;cursor:pointer}
 
-/* ── HOME — summary strip ───────────────────────────────── */
+/* ── HOME hero (2 primary metrics) ──────────────────────── */
+.hero-strip{
+  display:flex;gap:8px;
+  padding:8px 14px 6px;
+  background:var(--surface);
+  flex-shrink:0;
+}
+.hero-card{
+  flex:1;background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:11px 13px;
+  display:flex;flex-direction:column;gap:3px;
+}
+.hero-lbl{font-size:11px;color:var(--text3);font-weight:500}
+.hero-val{font-size:22px;font-weight:700;letter-spacing:-.6px}
+.hero-val.g{color:var(--green)}.hero-val.r{color:var(--red)}
+.hero-sub{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* collapsible detail accordion */
+.detail-toggle{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 14px 7px;background:var(--surface);
+  cursor:pointer;user-select:none;flex-shrink:0;
+}
+.detail-toggle-lbl{font-size:11px;color:var(--text3)}
+.detail-toggle svg{width:14px;height:14px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s}
+.detail-toggle.open svg{transform:rotate(180deg)}
+.detail-panel{
+  display:none;padding:0 14px 8px;background:var(--surface);flex-shrink:0;
+}
+.detail-panel.open{display:flex;gap:7px}
+.detail-tile{
+  flex:1;background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;
+}
+.detail-lbl{font-size:10px;color:var(--text3);margin-bottom:3px;white-space:nowrap}
+.detail-val{font-size:14px;font-weight:600;letter-spacing:-.3px;white-space:nowrap}
+.detail-val.g{color:var(--green)}.detail-val.r{color:var(--red)}.detail-val.o{color:var(--orange)}
+
+/* ── HOME — summary strip (kept for non-home screens) ───── */
 .summary-strip{
   display:flex;gap:7px;
   padding:7px 14px;
@@ -175,6 +213,101 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .bud-bar-fill{height:100%;background:var(--green);border-radius:99px;transition:width .5s ease}
 .bud-bar-fill.warn{background:var(--amber)}.bud-bar-fill.over{background:var(--red)}
 .bud-bar-pct{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;flex-shrink:0;min-width:28px;text-align:right}
+
+/* ── UX4: Semantic status badges (WCAG accessible) ──────── */
+/* Badges already carry text labels (已繳/未繳/代墊中/已收回).
+   We reinforce shape + pattern cues so they work without color. */
+.badge{
+  font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;
+  white-space:nowrap;
+  /* Accessible: also uses border to distinguish paid vs unpaid even in greyscale */
+}
+.badge.g{background:var(--green-lt);color:var(--green-dk);border:0.5px solid var(--green)}
+.badge.r{background:var(--red-lt);color:var(--red-dk);border:0.5px solid var(--red)}
+.badge.o{background:var(--orange-lt);color:var(--orange-dk);border:0.5px solid var(--orange)}
+
+/* ── UX6: Enhanced empty states with CTA ───────────────── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:16px 24px 24px;text-align:center;min-height:60%;
+}
+.empty-state svg{width:80px;height:80px;margin-bottom:14px;opacity:.8}
+.empty-state h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-state p{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:14px;max-width:200px}
+.empty-cta{
+  height:40px;padding:0 24px;
+  background:var(--green);color:#fff;border:none;border-radius:99px;
+  font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;
+  display:block;width:fit-content;
+}
+.empty-cta-sec{
+  height:36px;padding:0 20px;
+  background:transparent;color:var(--text2);
+  border:0.5px solid var(--border2);border-radius:99px;
+  font-size:13px;cursor:pointer;display:block;width:fit-content;
+}
+.empty-msg{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;color:var(--text3);font-size:14px;padding:32px 20px;
+}
+.empty-msg svg{width:44px;height:44px;stroke:var(--text3);fill:none;stroke-width:1.4;stroke-linecap:round;margin-bottom:10px;opacity:.5}
+
+/* ── UX3: Sticky filters in list view ───────────────────── */
+.list-sticky{
+  position:sticky;top:0;z-index:20;
+  background:var(--surface);
+  /* Force GPU layer so sticky doesn't cause repaints on scroll */
+  will-change:transform;
+}
+.range-bar{padding:8px 14px 6px}
+.range-row{display:flex;align-items:center;gap:6px}
+.range-row select{flex:1;height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);padding:0 22px 0 8px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 4L8 1' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;font-size:14px}
+.range-sep{font-size:13px;color:var(--text3);flex-shrink:0}
+.range-info{font-size:11px;color:var(--text3);margin-top:5px}
+.search-wrap{position:relative;padding:8px 14px 6px;background:var(--surface);flex-shrink:0}
+.search-wrap svg{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search-input{
+  width:100%;height:36px;
+  border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text);padding:0 10px 0 32px;font-size:15px;
+}
+.search-input:focus{outline:2px solid var(--green);outline-offset:-1px}
+.filter-row{
+  display:flex;gap:6px;padding:6px 14px 8px;
+  background:var(--surface);flex-shrink:0;
+}
+.filter-btn{
+  flex:1;height:32px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text2);cursor:pointer;font-size:13px;
+}
+.filter-btn.on{background:var(--green-lt);border-color:var(--green);color:var(--green-dk);font-weight:600}
+.list-footer{text-align:right;font-size:13px;color:var(--text3);padding:6px 2px 0}
+
+/* ── UX5: Swipe delete — reveal button requires explicit tap ─
+   del-bg becomes a real tappable button, not just a background.
+   Also adding an Undo action to the toast (handled in JS).     */
+.del-bg{
+  position:absolute;right:0;top:0;bottom:0;width:70px;
+  background:var(--red);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:#fff;font-size:11px;font-weight:600;
+  cursor:pointer;                 /* UX5: explicit tap target */
+  border-radius:0 var(--radius-lg) var(--radius-lg) 0;
+}
+.del-bg svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── UX7: Progressive disclosure — advanced toggle ──────── */
+.adv-toggle{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 0 2px;cursor:pointer;color:var(--text2);font-size:13px;
+  border:none;background:transparent;width:100%;
+}
+.adv-toggle svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s}
+.adv-toggle.open svg{transform:rotate(180deg)}
+.adv-fields{display:none;padding-top:4px}
+.adv-fields.open{display:block}
+/* Visual separator above advanced section */
+.adv-fields .fdivider{margin:8px 0 12px}
 
 /* ── Add button ─────────────────────────────────────────── */
 .add-btn{
@@ -524,16 +657,17 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .app-info-row span:first-child{color:var(--text3)}
 .app-info-row span:last-child{color:var(--text);font-weight:500}
 
-/* ── Toast ───────────────────────────────────────────────── */
+/* ── Toast (with optional undo action) ───────────────────── */
 .toast{
   position:fixed;bottom:calc(68px + var(--safe-b) + 10px);
   left:50%;transform:translateX(-50%) translateY(12px);
   background:rgba(26,26,24,.92);color:#fff;font-size:14px;
-  padding:9px 18px;border-radius:99px;
+  padding:9px 14px;border-radius:99px;
   opacity:0;transition:all .25s;pointer-events:none;
-  white-space:nowrap;z-index:999;max-width:90vw;
+  white-space:nowrap;z-index:999;max-width:92vw;
+  display:flex;align-items:center;gap:4px;
 }
-.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 </style>
 </head>
 <body>
@@ -541,25 +675,44 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 
 <!-- ═══════════════ HOME SCREEN ════════════════ -->
 <div id="s-home" class="screen on">
-  <!-- Top bar: month navigation -->
+  <!-- Month navigation -->
   <div class="top-bar">
-    <button class="month-nav-btn" onclick="shiftM(-1)">&#8249;</button>
-    <select id="hy" class="flex1" onchange="rHome()"></select>
-    <select id="hm" class="flex1" onchange="rHome()"></select>
-    <button class="month-nav-btn" onclick="shiftM(1)">&#8250;</button>
+    <button class="month-nav-btn" onclick="shiftM(-1)" aria-label="上個月">&#8249;</button>
+    <select id="hy" class="flex1" onchange="rHome()" aria-label="年份"></select>
+    <select id="hm" class="flex1" onchange="rHome()" aria-label="月份"></select>
+    <button class="month-nav-btn" onclick="shiftM(1)" aria-label="下個月">&#8250;</button>
   </div>
-  <!-- Summary metrics strip -->
-  <div class="summary-strip">
-    <div class="sum-card"><div class="sum-lbl">本月支出</div><div class="sum-val" id="h-tot">—</div></div>
-    <div class="sum-card"><div class="sum-lbl">已繳</div><div class="sum-val g" id="h-paid">—</div></div>
-    <div class="sum-card"><div class="sum-lbl">未繳</div><div class="sum-val r" id="h-unpaid">—</div></div>
-    <div class="sum-card"><div class="sum-lbl">代墊待收</div><div class="sum-val o" id="h-adv">—</div></div>
+  <!-- UX1: 2 primary metrics only -->
+  <div class="hero-strip">
+    <div class="hero-card">
+      <div class="hero-lbl">本月支出</div>
+      <div class="hero-val r" id="h-tot">—</div>
+      <!-- hidden compat IDs consumed by rHome() JS -->
+      <span id="h-paid" style="display:none">—</span>
+      <span id="h-unpaid" style="display:none">—</span>
+      <span id="h-adv" style="display:none">—</span>
+    </div>
+    <div class="hero-card">
+      <div class="hero-lbl">預算剩餘</div>
+      <div class="hero-val g" id="h-remain">—</div>
+      <div class="hero-sub" id="h-remain-sub"></div>
+    </div>
   </div>
   <!-- Budget bar -->
-  <div class="bud-bar" id="home-bud-bar">
+  <div class="bud-bar">
     <span class="bud-bar-lbl">月預算</span>
     <div class="bud-bar-track"><div class="bud-bar-fill" id="h-bud-fill" style="width:0%"></div></div>
     <span class="bud-bar-pct" id="h-bud-pct">未設定</span>
+  </div>
+  <!-- UX1: collapsible detail accordion -->
+  <div class="detail-toggle" id="detail-toggle" onclick="toggleDetail()" role="button" aria-expanded="false" aria-controls="detail-panel">
+    <span class="detail-toggle-lbl">詳細分類 ▸ 已繳 / 未繳 / 代墊</span>
+    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div class="detail-panel" id="detail-panel" role="region">
+    <div class="detail-tile"><div class="detail-lbl">已繳</div><div class="detail-val g" id="h-paid-d">—</div></div>
+    <div class="detail-tile"><div class="detail-lbl">未繳</div><div class="detail-val r" id="h-unpaid-d">—</div></div>
+    <div class="detail-tile"><div class="detail-lbl">代墊待收</div><div class="detail-val o" id="h-adv-d">—</div></div>
   </div>
   <!-- Scrollable list -->
   <div class="scroll-body" id="home-scroll">
@@ -571,29 +724,33 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 
 <!-- ═══════════════ LIST SCREEN ════════════════ -->
 <div id="s-list" class="screen">
-  <div class="top-bar">
-    <select id="ly" class="flex1" onchange="syncRange()"></select>
-    <select id="lm" class="flex1" onchange="syncRange()"></select>
-  </div>
-  <div class="range-bar">
-    <div class="range-row">
-      <select id="rf-y" onchange="rList()"></select>
-      <select id="rf-m" onchange="rList()"></select>
-      <span class="range-sep">—</span>
-      <select id="rt-y" onchange="rList()"></select>
-      <select id="rt-m" onchange="rList()"></select>
-    </div>
-    <div class="range-info" id="range-info">選擇日期範圍篩選</div>
-  </div>
+  <!-- UX3: Search stays at absolute top, always visible -->
   <div class="search-wrap">
     <svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5L18 18"/></svg>
-    <input class="search-input" id="search" type="search" placeholder="搜尋項目或備註…" oninput="debouncedSearch()">
+    <input class="search-input" id="search" type="search" placeholder="搜尋項目或備註…" aria-label="搜尋">
   </div>
-  <div class="filter-row">
-    <button class="filter-btn on" id="fa" onclick="setF('all')">全部</button>
-    <button class="filter-btn" id="fu" onclick="setF('unpaid')">未繳</button>
-    <button class="filter-btn" id="fp" onclick="setF('paid')">已繳</button>
-    <button class="filter-btn" id="fv" onclick="setF('advance')">代墊</button>
+  <!-- UX3: date range + filters become sticky header -->
+  <div class="list-sticky">
+    <div class="top-bar" style="border-top:0.5px solid var(--border)">
+      <select id="ly" class="flex1" onchange="syncRange()" aria-label="年份"></select>
+      <select id="lm" class="flex1" onchange="syncRange()" aria-label="月份"></select>
+    </div>
+    <div class="range-bar">
+      <div class="range-row">
+        <select id="rf-y" onchange="rList()" aria-label="範圍起始年"></select>
+        <select id="rf-m" onchange="rList()" aria-label="範圍起始月"></select>
+        <span class="range-sep">—</span>
+        <select id="rt-y" onchange="rList()" aria-label="範圍結束年"></select>
+        <select id="rt-m" onchange="rList()" aria-label="範圍結束月"></select>
+      </div>
+      <div class="range-info" id="range-info">選擇日期範圍篩選</div>
+    </div>
+    <div class="filter-row" role="group" aria-label="篩選狀態">
+      <button class="filter-btn on" id="fa" onclick="setF('all')" aria-pressed="true">全部</button>
+      <button class="filter-btn" id="fu" onclick="setF('unpaid')" aria-pressed="false">未繳</button>
+      <button class="filter-btn" id="fp" onclick="setF('paid')" aria-pressed="false">已繳</button>
+      <button class="filter-btn" id="fv" onclick="setF('advance')" aria-pressed="false">代墊</button>
+    </div>
   </div>
   <div class="scroll-body"><div id="list-items"></div></div>
 </div>
@@ -771,6 +928,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
     <button class="fs-save" onclick="saveItem()">儲存</button>
   </div>
   <div class="fs-body">
+    <!-- ── Essential fields (always visible) ── -->
     <div class="field">
       <label>費用類型</label>
       <div class="radio-row">
@@ -779,42 +937,51 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       </div>
     </div>
     <div class="adv-hint-box" id="adv-hint" style="display:none"><p>代墊款：先代替他人支付，待對方償還。不計入個人支出，以橘色獨立追蹤。</p></div>
-    <div class="field"><label>類別</label><select id="f-cat"></select></div>
-    <div class="field"><label>項目名稱</label><input id="f-name" type="text" placeholder="例：中國信託信用卡費" autocomplete="off"></div>
+    <div class="field"><label>類別</label><select id="f-cat" aria-label="費用類別"></select></div>
+    <div class="field"><label>項目名稱</label><input id="f-name" type="text" placeholder="例：中國信託信用卡費" autocomplete="off" aria-label="項目名稱"></div>
     <div class="field" id="f-payee-wrap" style="display:none">
-      <label>代墊對象</label><input id="f-payee" type="text" placeholder="例：小明" autocomplete="off">
+      <label>代墊對象</label><input id="f-payee" type="text" placeholder="例：小明" autocomplete="off" aria-label="代墊對象">
     </div>
     <div class="field">
       <label>金額（元）</label>
-      <div class="amt-wrap" onclick="document.getElementById('f-amt-r').focus()">
+      <div class="amt-wrap" onclick="document.getElementById('f-amt-r').focus()" role="group" aria-label="金額輸入">
         <span class="amt-unit">$</span>
-        <span class="amt-disp ph" id="f-amt-d">0</span>
-        <input class="amt-input" id="f-amt-r" type="number" inputmode="numeric" min="0" step="1" oninput="syncAmt('f-amt-r','f-amt-d')" onfocus="this.select()">
+        <span class="amt-disp ph" id="f-amt-d" aria-hidden="true">0</span>
+        <input class="amt-input" id="f-amt-r" type="number" inputmode="numeric" min="0" step="1" oninput="syncAmt('f-amt-r','f-amt-d')" onfocus="this.select()" aria-label="金額">
       </div>
     </div>
-    <div class="field"><label>繳費 / 到期日</label><input id="f-date" type="date"></div>
-    <div class="field">
-      <label>到期提醒</label>
-      <div class="radio-row">
-        <label class="radio-opt"><input type="radio" name="remind" id="rd-off" value="0"> 不提醒</label>
-        <label class="radio-opt"><input type="radio" name="remind" id="rd-3" value="3"> 提前 3 天</label>
-        <label class="radio-opt"><input type="radio" name="remind" id="rd-7" value="7"> 提前 7 天</label>
+    <div class="field"><label>繳費 / 到期日</label><input id="f-date" type="date" aria-label="日期"></div>
+
+    <!-- UX7: Advanced toggle — hidden by default -->
+    <button class="adv-toggle" id="adv-toggle" type="button" onclick="toggleAdvFields()" aria-expanded="false" aria-controls="adv-fields">
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      更多選項（提醒 / 備註 / 狀態）
+    </button>
+    <div class="adv-fields" id="adv-fields" role="region">
+      <div class="adv-fields fdivider" style="height:0.5px;background:var(--border);margin:0 0 12px"></div>
+      <div class="field">
+        <label>到期提醒</label>
+        <div class="radio-row">
+          <label class="radio-opt"><input type="radio" name="remind" id="rd-off" value="0"> 不提醒</label>
+          <label class="radio-opt"><input type="radio" name="remind" id="rd-3" value="3"> 提前 3 天</label>
+          <label class="radio-opt"><input type="radio" name="remind" id="rd-7" value="7"> 提前 7 天</label>
+        </div>
       </div>
-    </div>
-    <div class="field"><label>備註（選填）</label><textarea id="f-note" placeholder="例：含年費、自動扣款…"></textarea></div>
-    <div class="fdivider"></div>
-    <div class="field" id="f-status-wrap">
-      <label>繳納狀態</label>
-      <div class="radio-row">
-        <label class="radio-opt"><input type="radio" name="paid" id="r-unpaid" value="0"> 尚未繳納</label>
-        <label class="radio-opt"><input type="radio" name="paid" id="r-paid" value="1"> 已繳納</label>
+      <div class="field"><label>備註（選填）</label><textarea id="f-note" placeholder="例：含年費、自動扣款…" aria-label="備註"></textarea></div>
+      <div class="fdivider"></div>
+      <div class="field" id="f-status-wrap">
+        <label>繳納狀態</label>
+        <div class="radio-row">
+          <label class="radio-opt"><input type="radio" name="paid" id="r-unpaid" value="0"> 尚未繳納</label>
+          <label class="radio-opt"><input type="radio" name="paid" id="r-paid" value="1"> 已繳納</label>
+        </div>
       </div>
-    </div>
-    <div class="field" id="f-recovered-wrap" style="display:none">
-      <label>收回狀態</label>
-      <div class="radio-row">
-        <label class="radio-opt"><input type="radio" name="recovered" id="r-unrec" value="0"> 尚未收回</label>
-        <label class="radio-opt"><input type="radio" name="recovered" id="r-rec" value="1"> 已收回</label>
+      <div class="field" id="f-recovered-wrap" style="display:none">
+        <label>收回狀態</label>
+        <div class="radio-row">
+          <label class="radio-opt"><input type="radio" name="recovered" id="r-unrec" value="0"> 尚未收回</label>
+          <label class="radio-opt"><input type="radio" name="recovered" id="r-rec" value="1"> 已收回</label>
+        </div>
       </div>
     </div>
   </div>
@@ -942,6 +1109,40 @@ function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('on');
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2300);
+}
+
+// UX5: Undo-toast — shows message + tappable Undo action for 4 seconds
+let _undoTimer=null;
+function toastUndo(msg, undoFn){
+  const t=document.getElementById('toast');
+  t.innerHTML=`${esc(msg)} <button onclick="doUndo()" style="margin-left:10px;background:rgba(255,255,255,.22);border:none;color:#fff;padding:2px 10px;border-radius:99px;cursor:pointer;font-size:13px">復原</button>`;
+  t._undoFn=undoFn;
+  t.classList.add('on');
+  clearTimeout(_undoTimer);
+  _undoTimer=setTimeout(()=>{t.classList.remove('on');t._undoFn=null;},4000);
+}
+function doUndo(){
+  const t=document.getElementById('toast');
+  if(t._undoFn){clearTimeout(_undoTimer);t._undoFn();t._undoFn=null;}
+  t.classList.remove('on');
+}
+
+// UX1: toggle collapsible detail panel on home screen
+function toggleDetail(){
+  const panel=document.getElementById('detail-panel');
+  const toggle=document.getElementById('detail-toggle');
+  const open=panel.classList.toggle('open');
+  toggle.classList.toggle('open',open);
+  toggle.setAttribute('aria-expanded',open);
+}
+
+// UX7: toggle advanced fields in add/edit form
+function toggleAdvFields(){
+  const fields=document.getElementById('adv-fields');
+  const btn=document.getElementById('adv-toggle');
+  const open=fields.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open);
 }
 
 // ── IndexedDB (Optimized Layers) ─────────────────────────
@@ -1085,22 +1286,38 @@ function renderRems(rems,max){
 async function rHome(){
   dirty.home=false;
   const{y,m}=curYM(),key=ymStr(y,m);
-  
-  // 優化：直接從資料庫撈取當月資料，不載入全部
   const items = await getByYM(key);
   const normal=items.filter(x=>x.itype!=='advance');
   const advance=items.filter(x=>x.itype==='advance');
   const total=normal.reduce((s,x)=>s+x.amount,0);
   const paid=normal.filter(x=>x.paid===1).reduce((s,x)=>s+x.amount,0);
+  const unpaid=total-paid;
   const advUnrec=advance.filter(x=>x.recovered!==1).reduce((s,x)=>s+x.amount,0);
 
+  // UX1: primary 2-metric hero
   document.getElementById('h-tot').textContent=fmt(total);
+  // hidden compat spans (other code reads these)
   document.getElementById('h-paid').textContent=fmt(paid);
-  document.getElementById('h-unpaid').textContent=fmt(total-paid);
+  document.getElementById('h-unpaid').textContent=fmt(unpaid);
   document.getElementById('h-adv').textContent=fmt(advUnrec);
+  // collapsible detail panel
+  document.getElementById('h-paid-d').textContent=fmt(paid);
+  document.getElementById('h-unpaid-d').textContent=fmt(unpaid);
+  document.getElementById('h-adv-d').textContent=fmt(advUnrec);
+  // remaining budget hero
+  const bTotal=budStore.total||0;
+  const remain=bTotal>0?bTotal-total:null;
+  const remEl=document.getElementById('h-remain');
+  const remSub=document.getElementById('h-remain-sub');
+  if(bTotal>0){
+    remEl.textContent=fmt(Math.max(remain,0));
+    remEl.className='hero-val'+(remain<0?' r':remain<bTotal*.2?' '+(remain>=0?'':'r'):' g');
+    remSub.textContent=`預算 ${fmt(bTotal)}`;
+  }else{
+    remEl.textContent='未設定';remEl.className='hero-val';remSub.textContent='點設定頁面設定預算';
+  }
 
   // Budget bar
-  const bTotal=budStore.total||0;
   const pct=bTotal>0?Math.min(Math.round(total/bTotal*100),100):0;
   const fill=document.getElementById('h-bud-fill');
   const pctLbl=document.getElementById('h-bud-pct');
@@ -1108,21 +1325,18 @@ async function rHome(){
     fill.style.width=pct+'%';
     fill.className='bud-bar-fill'+(pct>=100?' over':pct>=80?' warn':'');
     pctLbl.textContent=pct+'%';
-  } else {
-    fill.style.width='0%';fill.className='bud-bar-fill';
-    pctLbl.textContent='未設定';
-  }
+  }else{fill.style.width='0%';fill.className='bud-bar-fill';pctLbl.textContent='未設定';}
 
   const rems=await buildRems();renderRems(rems,3);
 
   const prevM=m===1?12:m-1,prevY=m===1?y-1:y;
-  // 優化：直接撈取上個月資料
   const prevItems=await getByYM(ymStr(prevY,prevM));
   document.getElementById('copy-wrap').innerHTML=(!items.length&&prevItems.length)
     ?`<div class="copy-banner" onclick="copyPrev()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><p>複製上月 <strong>${prevItems.length} 筆</strong>到本月？</p><span>複製</span></div>`:'';
 
   const el=document.getElementById('home-list');
   if(!items.length){
+    // UX6: actionable empty state — both primary CTA and copy shortcut
     el.innerHTML=`<div class="empty-state">
       <svg viewBox="0 0 100 100" fill="none">
         <rect x="15" y="25" width="70" height="55" rx="9" fill="var(--surface2)"/>
@@ -1133,23 +1347,20 @@ async function rHome(){
         <path d="M78 72v12M72 78h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
       </svg>
       <h3>本月尚無費用項目</h3>
-      <p>點下方 + 按鈕新增第一筆費用<br>開始追蹤每月支出</p>
+      <p>點下方 + 新增第一筆費用<br>開始追蹤每月支出</p>
       <button class="empty-cta" onclick="openForm()">新增費用項目</button>
+      ${prevItems.length?`<button class="empty-cta-sec" onclick="copyPrev()">複製上月 ${prevItems.length} 筆</button>`:''}
     </div>`;
     return;
   }
-  
   el.innerHTML='';
-  // 優化：使用 DocumentFragment 減少 DOM 重繪
   const frag = document.createDocumentFragment();
-  
   if(advance.filter(x=>x.recovered!==1).length){
     const unrec=advance.filter(x=>x.recovered!==1);
     const b=document.createElement('div');b.className='adv-banner';
     b.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p>本月有 <strong>${unrec.length} 筆代墊款</strong>（共 ${fmt(unrec.reduce((s,x)=>s+x.amount,0))}）尚未收回</p>`;
     frag.appendChild(b);
   }
-  
   const cats={};
   normal.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>(cats[x.cat]=cats[x.cat]||[]).push(x));
   Object.keys(cats).forEach(cat=>{
@@ -1199,6 +1410,20 @@ function makeCard(x){
   
   right.append(amt,badge);row.append(chk,info,right);card.append(bg,row);
 
+  // UX5: swipe reveals delete zone, but user must explicitly TAP the del-bg button.
+  // No confirm() dialog — instead an Undo toast gives 4 seconds to reverse.
+  bg.addEventListener('click', async()=>{
+    const backup={...x};
+    await delItem(x.id);
+    dirtyAll();rHome();
+    // Undo toast: show for 4s, clicking it restores the item
+    toastUndo(`已刪除「${x.name}」`, async()=>{
+      delete backup.id;
+      await putItem(backup);
+      dirtyAll();rHome();toast('已復原');
+    });
+  });
+
   const DIR={IDLE:0,HORIZ:1,VERT:2};
   let phase=DIR.IDLE,sx=0,sy=0,dx=0;
   const COMMIT=18,RATIO=2.0,TRIGGER=60,FULL=70;
@@ -1215,12 +1440,14 @@ function makeCard(x){
     dx=rx<-50?-50+(rx+50)*.3:rx;dx=Math.max(dx,-FULL);
     if(dx<0)row.style.transform=`translateX(${dx}px)`;
   },{passive:false});
-  row.addEventListener('touchend',async()=>{
+  row.addEventListener('touchend',()=>{
+    // UX5: snap to reveal delete button — user must tap it explicitly
     if(phase===DIR.HORIZ&&dx<-TRIGGER){
       row.style.transform=`translateX(-${FULL}px)`;
-      if(confirm(`刪除「${x.name}」？`)){await delItem(x.id);dirtyAll();rHome();toast('已刪除');}
-      else row.style.transform='';
-    }else row.style.transform='';
+      // Tap anywhere on the row (not del-bg) to cancel
+      const cancel=()=>{row.style.transform='';row.removeEventListener('click',cancel);};
+      setTimeout(()=>row.addEventListener('click',cancel),50);
+    }else{row.style.transform='';}
     phase=DIR.IDLE;dx=0;
   });
   return card;
@@ -1236,7 +1463,12 @@ function debouncedSearch(){
 
 function setF(f){
   listFilter=f;
-  ['fa','fu','fp','fv'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',['all','unpaid','paid','advance'][i]===f));
+  ['fa','fu','fp','fv'].forEach((id,i)=>{
+    const btn=document.getElementById(id);
+    const isActive=['all','unpaid','paid','advance'][i]===f;
+    btn.classList.toggle('on',isActive);
+    btn.setAttribute('aria-pressed',isActive);  // UX4: A11y
+  });
   rList();
 }
 async function rList(){
@@ -1257,7 +1489,33 @@ async function rList(){
   document.getElementById('range-info').textContent=`${from===to?from:from+' ~ '+to}，共 ${items.length} 筆`;
   const el=document.getElementById('list-items');
   
-  if(!items.length){el.innerHTML=`<div class="empty-msg">${q?`找不到「${esc(q)}」`:'無符合條件的項目'}</div>`;return;}
+  if(!items.length){
+    // UX6: contextual empty state based on active filter
+    let emptyIcon='<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>';
+    let emptyTitle='無符合條件的項目';
+    let emptySub='';
+    let emptyCTA='';
+    if(q){
+      emptyTitle=`找不到「${esc(q)}」`;
+      emptySub='試試其他關鍵字，或清空搜尋';
+      emptyCTA=`<button class="empty-cta-sec" onclick="document.getElementById('search').value='';rList()">清空搜尋</button>`;
+    } else if(listFilter==='unpaid'){
+      emptyTitle='沒有未繳項目';emptySub='本期所有費用均已繳納 ✓';
+    } else if(listFilter==='paid'){
+      emptyTitle='沒有已繳項目';emptySub='本期尚無已繳費用';
+    } else if(listFilter==='advance'){
+      emptyTitle='沒有代墊項目';emptySub='本期無代墊款紀錄';
+    } else {
+      emptyTitle='本期無費用記錄';emptySub='換一個時間範圍試試';
+    }
+    el.innerHTML=`<div class="empty-msg">
+      <svg viewBox="0 0 24 24">${emptyIcon}</svg>
+      <strong style="font-size:14px;color:var(--text2);margin-bottom:5px">${emptyTitle}</strong>
+      ${emptySub?`<span style="font-size:12px">${emptySub}</span>`:''}
+      ${emptyCTA}
+    </div>`;
+    return;
+  }
   
   el.innerHTML='';
   // 優化：使用 DocumentFragment
@@ -1483,6 +1741,18 @@ async function openForm(id){
     document.getElementById('r-unpaid').checked=true;document.getElementById('r-paid').checked=false;
     document.getElementById('r-unrec').checked=true;document.getElementById('r-rec').checked=false;
   }
+  // UX7: always start with advanced fields collapsed for new entries
+  const advFields=document.getElementById('adv-fields');
+  const advBtn=document.getElementById('adv-toggle');
+  if(!id){
+    advFields.classList.remove('open');advBtn.classList.remove('open');
+    advBtn.setAttribute('aria-expanded','false');
+  } else {
+    // editing: open advanced section so all fields are visible
+    advFields.classList.add('open');advBtn.classList.add('open');
+    advBtn.setAttribute('aria-expanded','true');
+  }
+
   document.getElementById('fsform').classList.add('on');
   _savedScroll=window.scrollY;
   document.body.style.top=`-${_savedScroll}px`;
@@ -1605,10 +1875,11 @@ openDB().then(()=>{
   
   // 優化：處理中文輸入法 (IME) 的搜尋防抖事件
   const sInput = document.getElementById('search');
-  if(sInput) {
-    sInput.addEventListener('compositionstart', () => isComposing = true);
-    sInput.addEventListener('compositionend', () => { isComposing = false; debouncedSearch(); });
-    // 保留原本 HTML 的 oninput，透過 isComposing 旗標來攔截
+  if(sInput){
+    sInput.addEventListener('compositionstart',()=>isComposing=true);
+    sInput.addEventListener('compositionend',()=>{isComposing=false;debouncedSearch();});
+    // UX3: input listener wired here (not via oninput attr) to prevent IME double-fire
+    sInput.addEventListener('input',debouncedSearch);
   }
 
   rHome();
