@@ -380,7 +380,15 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   transition:transform .22s ease;will-change:transform;
 }
 .ichk{width:21px;height:21px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
-.iinfo{flex:1;min-width:0;cursor:pointer}
+/* Fix 3: iinfo is now a <button> — reset all button chrome so it looks like
+   a plain block. Native button gives Enter+Space keyboard support for free. */
+.iinfo{
+  flex:1;min-width:0;cursor:pointer;
+  border:none;background:transparent;
+  padding:0;text-align:left;
+  font:inherit;color:inherit;
+  display:block;                /* fill the flex row slot */
+}
 .iinfo:active{opacity:.7}
 .iname{
   font-size:14px;font-weight:500;
@@ -899,7 +907,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <div class="app-info-name">費用管理</div>
       <div class="app-info-version">個人記帳 PWA</div>
       <div class="app-info-rows">
-        <div class="app-info-row"><span>版本</span><span>v1.3</span></div>
+        <div class="app-info-row"><span>版本</span><span>v1.3.0</span></div>
         <div class="app-info-row"><span>建置日期</span><span>2026/04/28</span></div>
         <div class="app-info-row"><span>開發者</span><span>Henry</span></div>
       </div>
@@ -1181,6 +1189,9 @@ const getAll=()=>new Promise(res=>{store('readonly').getAll().onsuccess=e=>res(e
 // 新增：利用 Index 進行 O(1) 範圍查詢，避免每次都撈出全部資料過濾
 const getByYM=(ym)=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.only(ym)).onsuccess=e=>res(e.target.result||[]);});
 const getByRange=(from,to)=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.bound(from,to)).onsuccess=e=>res(e.target.result||[]);});
+// Fix 1: getById — primary-key lookup, O(log n), used by event delegation
+// for delete and checkbox toggle (avoids full table scan with getAll().find())
+const getById=id=>new Promise(res=>{store('readonly').get(id).onsuccess=e=>res(e.target.result||null);});
 
 const putItem=item=>new Promise(res=>{
   const r=store('readwrite').put(item);
@@ -1402,6 +1413,7 @@ function makeCard(x){
   card.className='icard';
   card.dataset.id=x.id;          // OPT1: delegation key
   card.dataset.isadv=isAdv?'1':'0';
+  card.dataset.amt=x.amount;     // Fix 2: raw integer — never parse formatted text
 
   // Delete background — data-action tells the delegation handler what to do
   const bg=document.createElement('div');
@@ -1423,11 +1435,12 @@ function makeCard(x){
     ? (isDone?'已收回，點擊取消':'未收回，點擊標記收回')
     : (isDone?'已繳，點擊取消':'未繳，點擊標記繳納'));
 
-  // Info area — data-action="edit" opens form
-  const info=document.createElement('div');info.className='iinfo';
+  // Fix 3: use native <button> instead of div[role=button] so Enter and Space
+  // trigger click events natively — no extra keydown handler needed on the card.
+  const info=document.createElement('button');
+  info.className='iinfo';
+  info.type='button';           // prevent accidental form submission
   info.dataset.action='edit';
-  info.setAttribute('role','button');
-  info.setAttribute('tabindex','0');
   info.setAttribute('aria-label',`編輯：${x.name}`);
 
   const nm=document.createElement('div');
@@ -1470,9 +1483,8 @@ function _patchHomeMetrics(){
   let total=0, paid=0, advUnrec=0;
   list.querySelectorAll('.icard').forEach(card=>{
     const isAdv = card.dataset.isadv === '1';
-    const amtEl = card.querySelector('.iamt');
-    // Parse the formatted amount back to a number
-    const raw = amtEl ? parseInt(amtEl.textContent.replace(/[^0-9]/g,'')) || 0 : 0;
+    // Fix 2: read raw amount from dataset — immune to currency format changes
+    const raw = parseInt(card.dataset.amt) || 0;
     const isDone = card.querySelector('.iname')?.classList.contains('done');
     if(isAdv){
       if(!isDone) advUnrec += raw;
@@ -2047,6 +2059,51 @@ openDB().then(()=>{
 
   attachListDelegation('home-list');
   attachListDelegation('list-items');
+
+  // Fix 3b: Global Escape key handler — closes the topmost open modal/overlay.
+  // Priority order matches z-index stack: fsform > sheet overlays.
+  // After closing, focus returns to the element that opened the modal
+  // (stored in _lastFocus) so keyboard users don't lose their position.
+  let _lastFocus = null;
+
+  // Intercept openForm / sheet opens to save focus origin
+  const _origOpenForm = openForm;
+  window.openForm = async function(id){
+    _lastFocus = document.activeElement;
+    await _origOpenForm(id);
+  };
+  ['bov','cov','rsov'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const observer = new MutationObserver(()=>{
+      if(el.classList.contains('on') && !el._focusSaved){
+        el._focusSaved = true;
+        _lastFocus = document.activeElement;
+      } else if(!el.classList.contains('on')){
+        el._focusSaved = false;
+      }
+    });
+    observer.observe(el, {attributes:true, attributeFilter:['class']});
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape') return;
+
+    // Highest z-index first: full-screen form
+    const fsform = document.getElementById('fsform');
+    if(fsform && fsform.classList.contains('on')){
+      closeForm();
+      if(_lastFocus) _lastFocus.focus();
+      return;
+    }
+
+    // Sheet overlays: close whichever is open
+    const openSheet = document.querySelector('.overlay.on');
+    if(openSheet){
+      openSheet.classList.remove('on');
+      if(_lastFocus) _lastFocus.focus();
+    }
+  });
 
   rHome();
 });
