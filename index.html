@@ -33,6 +33,23 @@ input,select,textarea,button{font-family:inherit;font-size:16px}
   --radius-lg:14px;
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
+  /* ── Z-index design tokens ──────────────────────────────
+     Single source of truth for all stacking contexts.
+     Increment in steps of 10 so layers can be inserted later.
+     --z-card-row    : irow sits above del-bg in the same card
+     --z-sticky      : list sticky header above scrolling rows
+     --z-fab         : FAB floats above content, below tab bar
+     --z-tabs        : tab bar anchored above FAB
+     --z-fullscreen  : full-screen add/edit form
+     --z-overlay     : modal dim overlay
+     --z-toast       : always on top                          */
+  --z-card-row:1;
+  --z-sticky:20;
+  --z-fab:40;
+  --z-tabs:50;
+  --z-fullscreen:60;
+  --z-overlay:70;
+  --z-toast:80;
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#1c1c1e;--surface:#2c2c2e;--surface2:#3a3a3c;
@@ -77,7 +94,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   border-top:0.5px solid var(--border);
   padding-bottom:var(--safe-b);
   flex-shrink:0;
-  z-index:50;
+  z-index:var(--z-tabs);
 }
 .tab{
   flex:1;display:flex;flex-direction:column;align-items:center;
@@ -254,7 +271,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 
 /* ── UX3: Sticky filters in list view ───────────────────── */
 .list-sticky{
-  position:sticky;top:0;z-index:20;
+  position:sticky;top:0;z-index:var(--z-sticky);
   background:var(--surface);
   /* Force GPU layer so sticky doesn't cause repaints on scroll */
   will-change:transform;
@@ -329,7 +346,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   background:var(--green);border:none;border-radius:50%;
   box-shadow:0 2px 10px rgba(29,158,117,.4);
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;z-index:49;
+  cursor:pointer;z-index:var(--z-fab);
   opacity:0;visibility:hidden;pointer-events:none;
   transition:opacity .2s,visibility .2s,transform .15s;
 }
@@ -359,7 +376,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .del-bg svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .irow{
   display:flex;align-items:center;gap:10px;padding:12px 13px;
-  background:var(--bg);position:relative;z-index:1;
+  background:var(--bg);position:relative;z-index:var(--z-card-row);
   transition:transform .22s ease;will-change:transform;
 }
 .ichk{width:21px;height:21px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
@@ -517,7 +534,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 /* ── Overlays and modals ─────────────────────────────────── */
 .overlay{
   display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,.45);z-index:300;
+  background:rgba(0,0,0,.45);z-index:var(--z-overlay);
   align-items:flex-end;justify-content:center;
   overflow:hidden;
 }
@@ -573,7 +590,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 /* ── Full-screen form (slide in from right) ──────────────── */
 .fsform{
   position:fixed;inset:0;
-  background:var(--surface);z-index:200;
+  background:var(--surface);z-index:var(--z-fullscreen);
   display:flex;flex-direction:column;
   transform:translateX(100%);
   transition:transform .3s cubic-bezier(.4,0,.2,1);
@@ -664,7 +681,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   background:rgba(26,26,24,.92);color:#fff;font-size:14px;
   padding:9px 14px;border-radius:99px;
   opacity:0;transition:all .25s;pointer-events:none;
-  white-space:nowrap;z-index:999;max-width:92vw;
+  white-space:nowrap;z-index:var(--z-toast);max-width:92vw;
   display:flex;align-items:center;gap:4px;
 }
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
@@ -882,8 +899,8 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <div class="app-info-name">費用管理</div>
       <div class="app-info-version">個人記帳 PWA</div>
       <div class="app-info-rows">
-        <div class="app-info-row"><span>版本</span><span>v2.0.0</span></div>
-        <div class="app-info-row"><span>建置日期</span><span>2026/04/27</span></div>
+        <div class="app-info-row"><span>版本</span><span>v1.0.0</span></div>
+        <div class="app-info-row"><span>建置日期</span><span>2026/04/24</span></div>
         <div class="app-info-row"><span>開發者</span><span>Henry</span></div>
       </div>
     </div>
@@ -892,22 +909,22 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 </div>
 
 <!-- ═══════════════ TAB BAR ════════════════ -->
-<div class="tabs">
-  <button class="tab on" id="tab-home" onclick="showS('home')">
-    <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M9 21V12h6v9"/></svg>
-    本月<span class="tab-dot" id="remind-badge">0</span>
+<div class="tabs" role="tablist" aria-label="主要導覽">
+  <button class="tab on" id="tab-home" role="tab" aria-selected="true" aria-controls="s-home" onclick="showS('home')">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M9 21V12h6v9"/></svg>
+    本月<span class="tab-dot" id="remind-badge" aria-label="未處理提醒數">0</span>
   </button>
-  <button class="tab" id="tab-list" onclick="showS('list')">
-    <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明細
+  <button class="tab" id="tab-list" role="tab" aria-selected="false" aria-controls="s-list" onclick="showS('list')">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>明細
   </button>
-  <button class="tab" id="tab-chart" onclick="showS('chart')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l5.5 3"/></svg>圖表
+  <button class="tab" id="tab-chart" role="tab" aria-selected="false" aria-controls="s-chart" onclick="showS('chart')">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l5.5 3"/></svg>圖表
   </button>
-  <button class="tab" id="tab-trend" onclick="showS('trend')">
-    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/></svg>趨勢
+  <button class="tab" id="tab-trend" role="tab" aria-selected="false" aria-controls="s-trend" onclick="showS('trend')">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="22 12 18 12 15 20 9 4 6 12 2 12"/></svg>趨勢
   </button>
-  <button class="tab" id="tab-settings" onclick="showS('settings')">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定
+  <button class="tab" id="tab-settings" role="tab" aria-selected="false" aria-controls="s-settings" onclick="showS('settings')">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定
   </button>
 </div>
 </div><!-- #app -->
@@ -918,7 +935,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 </button>
 
 <!-- ═══════════════ FULL-SCREEN FORM ════════════════ -->
-<div id="fsform" class="fsform">
+<div id="fsform" class="fsform" role="dialog" aria-modal="true" aria-labelledby="fs-title">
   <div class="fs-nav">
     <button class="fs-back" onclick="closeForm()">
       <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -989,10 +1006,10 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 
 <!-- ═══════════════ MODALS ════════════════ -->
 <!-- Budget -->
-<div class="overlay" id="bov" onclick="if(event.target===this)this.classList.remove('on')">
+<div class="overlay" id="bov" role="dialog" aria-modal="true" aria-labelledby="bov-title" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
-    <h3>設定預算</h3>
+    <h3 id="bov-title">設定預算</h3>
     <div class="field">
       <label>每月總支出上限</label>
       <div class="amt-wrap" onclick="document.getElementById('bt-r').focus()">
@@ -1013,10 +1030,10 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 </div>
 
 <!-- Categories -->
-<div class="overlay" id="cov" onclick="if(event.target===this)this.classList.remove('on')">
+<div class="overlay" id="cov" role="dialog" aria-modal="true" aria-labelledby="cov-title" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
-    <h3>管理費用類別</h3>
+    <h3 id="cov-title">管理費用類別</h3>
     <div class="cat-grid" id="cat-tags"></div>
     <div class="cat-add-row">
       <input id="new-cat" type="text" placeholder="新增類別名稱" maxlength="10">
@@ -1029,10 +1046,10 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 </div>
 
 <!-- Reminders -->
-<div class="overlay" id="rsov" onclick="if(event.target===this)this.classList.remove('on')">
+<div class="overlay" id="rsov" role="dialog" aria-modal="true" aria-labelledby="rsov-title" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-handle"></div>
-    <h3>提醒設定</h3>
+    <h3 id="rsov-title">提醒設定</h3>
     <div class="remind-info-box"><p>開啟 App 時自動掃描到期費用，於首頁顯示提醒卡片。不需要系統通知權限。</p></div>
     <div id="remind-settings-rows"></div>
     <div class="sheet-btns" style="margin-top:14px">
@@ -1374,86 +1391,118 @@ async function rHome(){
   el.appendChild(frag);
 }
 
-// ── Item card (swipe-to-delete) ──────────────────────────
+// ── Item card (listener-free — all events handled by delegation) ──
+// OPT1: No addEventListener calls here. Data attributes carry the context
+// the delegation handler needs. This means N cards = 0 extra listeners.
 function makeCard(x){
   const isAdv=x.itype==='advance';
-  const card=document.createElement('div');card.className='icard';
-  const bg=document.createElement('div');bg.className='del-bg';
-  bg.innerHTML='<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除';
-  
-  const row=document.createElement('div');row.className='irow';
-  const chk=document.createElement('input');chk.type='checkbox';chk.className='ichk';
-  if(isAdv){
-    chk.checked=x.recovered===1;
-    chk.addEventListener('change',async()=>{x.recovered=chk.checked?1:0;await putItem(x);dirtyAll();rHome();toast(chk.checked?'已標記收回 ✓':'已取消收回');});
-  }else{
-    chk.checked=x.paid===1;
-    chk.addEventListener('change',async()=>{x.paid=chk.checked?1:0;await putItem(x);dirtyAll();rHome();toast(chk.checked?'已標記繳納 ✓':'已取消繳納');});
-  }
-  
-  const info=document.createElement('div');info.className='iinfo';info.addEventListener('click',()=>openForm(x.id));
   const isDone=isAdv?x.recovered===1:x.paid===1;
-  const nm=document.createElement('div');nm.className='iname'+(isDone?' done':'');
+
+  const card=document.createElement('div');
+  card.className='icard';
+  card.dataset.id=x.id;          // OPT1: delegation key
+  card.dataset.isadv=isAdv?'1':'0';
+
+  // Delete background — data-action tells the delegation handler what to do
+  const bg=document.createElement('div');
+  bg.className='del-bg';
+  bg.dataset.action='delete';
+  bg.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除';
+
+  // Row — swipe state stored directly on the element (avoids closure leak)
+  const row=document.createElement('div');
+  row.className='irow';
+  row.dataset.action='row';
+
+  // Checkbox — data-action="toggle" triggers granular DOM update (OPT2)
+  const chk=document.createElement('input');
+  chk.type='checkbox';chk.className='ichk';
+  chk.checked=isDone;
+  chk.dataset.action='toggle';
+  chk.setAttribute('aria-label', isAdv
+    ? (isDone?'已收回，點擊取消':'未收回，點擊標記收回')
+    : (isDone?'已繳，點擊取消':'未繳，點擊標記繳納'));
+
+  // Info area — data-action="edit" opens form
+  const info=document.createElement('div');info.className='iinfo';
+  info.dataset.action='edit';
+  info.setAttribute('role','button');
+  info.setAttribute('tabindex','0');
+  info.setAttribute('aria-label',`編輯：${x.name}`);
+
+  const nm=document.createElement('div');
+  nm.className='iname'+(isDone?' done':'');
   nm.appendChild(document.createTextNode(x.name));
-  if(!isDone&&x.date&&x.date<today()){const dot=document.createElement('span');dot.className='overdue-dot';nm.appendChild(dot);}
+  if(!isDone&&x.date&&x.date<today()){
+    const dot=document.createElement('span');dot.className='overdue-dot';dot.setAttribute('aria-label','逾期');nm.appendChild(dot);
+  }
   info.appendChild(nm);
-  
-  const subs=[];if(isAdv&&x.payee)subs.push('代墊：'+x.payee);if(x.date)subs.push(x.date);if(x.note)subs.push(x.note);
-  if(subs.length){const st=document.createElement('div');st.className='isub';st.textContent=subs.join('　');info.appendChild(st);}
-  
+
+  const subs=[];
+  if(isAdv&&x.payee)subs.push('代墊：'+x.payee);
+  if(x.date)subs.push(x.date);
+  if(x.note)subs.push(x.note);
+  if(subs.length){
+    const st=document.createElement('div');st.className='isub';
+    st.textContent=subs.join('　');info.appendChild(st);
+  }
+
+  // Amount + badge
   const right=document.createElement('div');right.className='iright';
-  const ac=isAdv?(x.recovered===1?'g':'o'):(x.paid===1?'g':'r');
+  const ac=isAdv?(isDone?'g':'o'):(isDone?'g':'r');
   const amt=document.createElement('div');amt.className=`iamt ${ac}`;amt.textContent=fmt(x.amount);
-  const bt=isAdv?(x.recovered===1?'已收回':'代墊中'):(x.paid===1?'已繳':'未繳');
-  const bc=isAdv?(x.recovered===1?'g':'o'):(x.paid===1?'g':'r');
-  const badge=document.createElement('span');badge.className=`badge ${bc}`;badge.textContent=bt;
-  
-  right.append(amt,badge);row.append(chk,info,right);card.append(bg,row);
+  const bt=isAdv?(isDone?'已收回':'代墊中'):(isDone?'已繳':'未繳');
+  const badge=document.createElement('span');badge.className=`badge ${ac}`;badge.textContent=bt;
 
-  // UX5: swipe reveals delete zone, but user must explicitly TAP the del-bg button.
-  // No confirm() dialog — instead an Undo toast gives 4 seconds to reverse.
-  bg.addEventListener('click', async()=>{
-    const backup={...x};
-    await delItem(x.id);
-    dirtyAll();rHome();
-    // Undo toast: show for 4s, clicking it restores the item
-    toastUndo(`已刪除「${x.name}」`, async()=>{
-      delete backup.id;
-      await putItem(backup);
-      dirtyAll();rHome();toast('已復原');
-    });
-  });
-
-  const DIR={IDLE:0,HORIZ:1,VERT:2};
-  let phase=DIR.IDLE,sx=0,sy=0,dx=0;
-  const COMMIT=18,RATIO=2.0,TRIGGER=60,FULL=70;
-  row.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;dx=0;phase=DIR.IDLE;},{passive:true});
-  row.addEventListener('touchmove',e=>{
-    const rx=e.touches[0].clientX-sx,ry=e.touches[0].clientY-sy;
-    if(phase===DIR.VERT)return;
-    if(phase===DIR.IDLE){
-      if(Math.sqrt(rx*rx+ry*ry)<COMMIT)return;
-      phase=(Math.abs(rx)/Math.max(Math.abs(ry),.1)>RATIO&&rx<0)?DIR.HORIZ:DIR.VERT;
-      if(phase===DIR.VERT)return;
-    }
-    e.preventDefault();
-    dx=rx<-50?-50+(rx+50)*.3:rx;dx=Math.max(dx,-FULL);
-    if(dx<0)row.style.transform=`translateX(${dx}px)`;
-  },{passive:false});
-  row.addEventListener('touchend',()=>{
-    // UX5: snap to reveal delete button — user must tap it explicitly
-    if(phase===DIR.HORIZ&&dx<-TRIGGER){
-      row.style.transform=`translateX(-${FULL}px)`;
-      // Tap anywhere on the row (not del-bg) to cancel
-      const cancel=()=>{row.style.transform='';row.removeEventListener('click',cancel);};
-      setTimeout(()=>row.addEventListener('click',cancel),50);
-    }else{row.style.transform='';}
-    phase=DIR.IDLE;dx=0;
-  });
+  right.append(amt,badge);
+  row.append(chk,info,right);
+  card.append(bg,row);
   return card;
 }
 
-// ── LIST & Search (Optimized IME Handling) ───────────────
+// ── OPT2: Lightweight home metric patch ──────────────────
+// Called after a checkbox toggle on the home list.
+// Reads amounts directly from the existing card DOM —
+// no DB query, no DOM rebuild, just arithmetic + textContent.
+function _patchHomeMetrics(){
+  const list = document.getElementById('home-list');
+  if(!list) return;
+  let total=0, paid=0, advUnrec=0;
+  list.querySelectorAll('.icard').forEach(card=>{
+    const isAdv = card.dataset.isadv === '1';
+    const amtEl = card.querySelector('.iamt');
+    // Parse the formatted amount back to a number
+    const raw = amtEl ? parseInt(amtEl.textContent.replace(/[^0-9]/g,'')) || 0 : 0;
+    const isDone = card.querySelector('.iname')?.classList.contains('done');
+    if(isAdv){
+      if(!isDone) advUnrec += raw;
+    } else {
+      total += raw;
+      if(isDone) paid += raw;
+    }
+  });
+  document.getElementById('h-tot').textContent  = fmt(total);
+  document.getElementById('h-paid').textContent  = fmt(paid);
+  document.getElementById('h-unpaid').textContent= fmt(total - paid);
+  document.getElementById('h-adv').textContent   = fmt(advUnrec);
+  document.getElementById('h-paid-d').textContent  = fmt(paid);
+  document.getElementById('h-unpaid-d').textContent = fmt(total - paid);
+  document.getElementById('h-adv-d').textContent    = fmt(advUnrec);
+  // Budget bar
+  const bTotal = budStore.total || 0;
+  const pct = bTotal > 0 ? Math.min(Math.round(total/bTotal*100), 100) : 0;
+  const fill = document.getElementById('h-bud-fill');
+  const pctLbl = document.getElementById('h-bud-pct');
+  if(bTotal > 0){
+    fill.style.width = pct + '%';
+    fill.className = 'bud-bar-fill' + (pct>=100?' over':pct>=80?' warn':'');
+    pctLbl.textContent = pct + '%';
+    // remaining hero
+    const remain = bTotal - total;
+    const remEl = document.getElementById('h-remain');
+    if(remEl) remEl.textContent = fmt(Math.max(remain, 0));
+  }
+}
 let _searchTimer=null, isComposing=false;
 function debouncedSearch(){
   if(isComposing) return; // 避免中文選字過程中頻繁觸發刷新
@@ -1679,7 +1728,9 @@ const SCREENS=['home','list','chart','trend','settings'];
 function showS(name){
   SCREENS.forEach(s=>{
     document.getElementById('s-'+s).classList.toggle('on',s===name);
-    document.getElementById('tab-'+s).classList.toggle('on',s===name);
+    const tab=document.getElementById('tab-'+s);
+    tab.classList.toggle('on',s===name);
+    tab.setAttribute('aria-selected',s===name); // OPT3: ARIA tablist
   });
   // FAB only on home screen
   document.getElementById('fab').classList.toggle('on',name==='home');
@@ -1881,6 +1932,121 @@ openDB().then(()=>{
     // UX3: input listener wired here (not via oninput attr) to prevent IME double-fire
     sInput.addEventListener('input',debouncedSearch);
   }
+
+  // ── OPT1+OPT2: Single Event Delegation for all item lists ──────────────
+  // N cards × 0 listeners each. ONE set per container, shared handler logic.
+  // WeakMap stores swipe state per row — auto-GC'd when the row is removed.
+  const swipeState = new WeakMap();
+  const DIR = {IDLE:0, HORIZ:1, VERT:2};
+  const COMMIT=18, RATIO=2.0, TRIGGER=60, FULL=70;
+
+  function attachListDelegation(containerId){
+    const container = document.getElementById(containerId);
+    if(!container) return;
+
+    // click + change ────────────────────────────────────────────────────────
+    container.addEventListener('click', async e=>{
+      const card = e.target.closest('.icard');
+      if(!card) return;
+      const id = parseInt(card.dataset.id);
+      const isAdv = card.dataset.isadv === '1';
+
+      // [delete] explicit tap on del-bg (revealed by swipe)
+      if(e.target.closest('[data-action="delete"]')){
+        const x = await getById(id); if(!x) return;
+        const backup = {...x};
+        await delItem(id);
+        dirtyAll();
+        card.remove(); // OPT2: remove only this card, no full rebuild
+        toastUndo(`已刪除「${x.name}」`, async()=>{
+          delete backup.id; await putItem(backup); dirtyAll(); rHome(); toast('已復原');
+        });
+        return;
+      }
+
+      // [edit] tap on info area
+      if(e.target.closest('[data-action="edit"]')){ openForm(id); return; }
+
+      // [row tap] cancel if swipe is open
+      const row = card.querySelector('.irow');
+      if(row && row.style.transform){ row.style.transform = ''; }
+    });
+
+    // OPT2: checkbox toggle — patch only the 4 affected DOM nodes, no re-render
+    container.addEventListener('change', async e=>{
+      if(!e.target.classList.contains('ichk')) return;
+      const card = e.target.closest('.icard'); if(!card) return;
+      const id = parseInt(card.dataset.id);
+      const isAdv = card.dataset.isadv === '1';
+      const checked = e.target.checked;
+
+      // Write to DB
+      const x = await getById(id); if(!x) return;
+      if(isAdv){ x.recovered = checked ? 1 : 0; }
+      else      { x.paid      = checked ? 1 : 0; }
+      await putItem(x);
+      dirtyAll(); // mark other screens stale — they'll refresh on next visit
+
+      // Granular DOM patch — O(1) cost regardless of list size
+      const row    = card.querySelector('.irow');
+      const nm     = row.querySelector('.iname');
+      const badge  = row.querySelector('.badge');
+      const amtEl  = row.querySelector('.iamt');
+      const dot    = nm.querySelector('.overdue-dot');
+      const cc     = isAdv ? (checked?'g':'o') : (checked?'g':'r');
+      const bt     = isAdv ? (checked?'已收回':'代墊中') : (checked?'已繳':'未繳');
+
+      nm.classList.toggle('done', checked);
+      badge.className = `badge ${cc}`;   badge.textContent = bt;
+      amtEl.className = `iamt ${cc}`;
+      if(checked && dot) dot.remove();
+      e.target.setAttribute('aria-label', isAdv
+        ? (checked?'已收回，點擊取消':'未收回，點擊標記收回')
+        : (checked?'已繳，點擊取消':'未繳，點擊標記繳納'));
+
+      // Update home hero numbers without rebuilding the list
+      if(containerId === 'home-list') _patchHomeMetrics();
+
+      toast(isAdv ? (checked?'已標記收回 ✓':'已取消收回')
+                  : (checked?'已標記繳納 ✓':'已取消繳納'));
+    });
+
+    // Swipe-to-delete ───────────────────────────────────────────────────────
+    container.addEventListener('touchstart', e=>{
+      const row = e.target.closest('.irow'); if(!row) return;
+      swipeState.set(row, {phase:DIR.IDLE, sx:e.touches[0].clientX, sy:e.touches[0].clientY, dx:0});
+    }, {passive:true});
+
+    container.addEventListener('touchmove', e=>{
+      const row = e.target.closest('.irow'); if(!row) return;
+      const s = swipeState.get(row); if(!s || s.phase===DIR.VERT) return;
+      const rx = e.touches[0].clientX - s.sx;
+      const ry = e.touches[0].clientY - s.sy;
+      if(s.phase === DIR.IDLE){
+        if(Math.sqrt(rx*rx+ry*ry) < COMMIT) return;
+        s.phase = (Math.abs(rx)/Math.max(Math.abs(ry),.1) > RATIO && rx<0) ? DIR.HORIZ : DIR.VERT;
+        if(s.phase === DIR.VERT) return;
+      }
+      e.preventDefault();
+      s.dx = rx < -50 ? -50+(rx+50)*.3 : rx;
+      s.dx = Math.max(s.dx, -FULL);
+      if(s.dx < 0) row.style.transform = `translateX(${s.dx}px)`;
+    }, {passive:false});
+
+    container.addEventListener('touchend', e=>{
+      const row = e.target.closest('.irow'); if(!row) return;
+      const s = swipeState.get(row); if(!s) return;
+      if(s.phase === DIR.HORIZ && s.dx < -TRIGGER){
+        row.style.transform = `translateX(-${FULL}px)`;
+      } else {
+        row.style.transform = '';
+      }
+      swipeState.set(row, {...s, phase:DIR.IDLE, dx:0});
+    }, {passive:true});
+  }
+
+  attachListDelegation('home-list');
+  attachListDelegation('list-items');
 
   rHome();
 });
