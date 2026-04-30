@@ -6,376 +6,713 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="費用管理">
-<meta name="theme-color" content="#0F766E">
+<meta name="theme-color" content="#1D9E75">
 <title>費用管理</title>
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230F766E'/%3E%3Ctext x='50' y='67' font-size='54' text-anchor='middle' fill='white' font-family='system-ui'%3E%24%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231D9E75'/%3E%3Ctext x='50' y='67' font-size='54' text-anchor='middle' fill='white' font-family='system-ui'%3E%24%3C/text%3E%3C/svg%3E">
 <style>
-/* ════════════════════════════════════════════════════════
-   DESIGN SYSTEM — Notion × iOS Fintech  v12
-   ════════════════════════════════════════════════════════ */
+/* ── Reset ─────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 input,select,textarea,button{font-family:inherit;font-size:16px}
 
+/* ── Design tokens ─────────────────────────────────────── */
 :root{
-  /* Primary — Teal 700 */
-  --P:#0F766E;--Plt:#CCFBF1;--Pdk:#134E4A;--Pdim:rgba(15,118,110,.12);
-  /* Semantic */
-  --S:#059669;--Slt:#D1FAE5;--Sdk:#064E3B;   /* success emerald */
-  --D:#E11D48;--Dlt:#FFE4E6;--Ddk:#9F1239;   /* danger rose */
-  --W:#D97706;--Wlt:#FEF3C7;--Wdk:#78350F;   /* warning amber */
-  --I:#2563EB;--Ilt:#DBEAFE;--Idk:#1E3A8A;   /* info blue */
-  --O:#EA580C;--Olt:#FFEDD5;--Odk:#7C2D12;   /* orange advance */
-  /* Surfaces */
-  --pg:#F9FAFB;--cd:#FFFFFF;--rs:#F3F4F6;--sk:#E5E7EB;
-  /* Text */
-  --t1:#111827;--t2:#374151;--t3:#6B7280;--t4:#9CA3AF;
-  /* Borders */
-  --b1:rgba(0,0,0,.08);--b2:rgba(0,0,0,.14);--b3:rgba(0,0,0,.22);
-  /* Shadows */
-  --sh1:0 1px 2px rgba(0,0,0,.05);
-  --sh2:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-  --sh3:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.04);
-  --sh4:0 10px 15px rgba(0,0,0,.08),0 4px 6px rgba(0,0,0,.04);
-  /* Shape */
-  --r:10px;--rl:14px;--rxl:18px;
-  /* Safe areas */
-  --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);
-  /* Z-index tokens */
-  --zr:1;--zs:20;--zf:40;--zt:50;--zfs:60;--zo:70;--zT:80;
-  /* Legacy aliases so existing JS class-based colour checks still work */
-  --green:var(--P);--green-lt:var(--Plt);--green-dk:var(--Pdk);
-  --red:var(--D);--red-lt:var(--Dlt);--red-dk:var(--Ddk);
-  --orange:var(--O);--orange-lt:var(--Olt);--orange-dk:var(--Odk);
-  --blue:var(--I);--blue-lt:var(--Ilt);--blue-dk:var(--Idk);
-  --amber:var(--W);--amber-lt:var(--Wlt);
-  --bg:var(--cd);--surface:var(--pg);--surface2:var(--rs);
-  --text:var(--t1);--text2:var(--t2);--text3:var(--t3);
-  --border:var(--b1);--border2:var(--b2);
-  --radius:var(--r);--radius-lg:var(--rl);
-  --safe-b:var(--sb);--safe-t:var(--st);
+  --green:#1D9E75;--green-lt:#E1F5EE;--green-dk:#085041;
+  --red:#E24B4A;  --red-lt:#FCEBEB;  --red-dk:#791F1F;
+  --orange:#D85A30;--orange-lt:#FAECE7;--orange-dk:#4A1B0C;
+  --blue:#378ADD; --blue-lt:#E6F1FB; --blue-dk:#0C447C;
+  --amber:#BA7517;--amber-lt:#FAEEDA;
+  --bg:#ffffff;
+  --surface:#f7f6f2;
+  --surface2:#edeae3;
+  --text:#1a1a18;
+  --text2:#5f5e5a;
+  --text3:#8a8880;
+  --border:rgba(0,0,0,0.10);
+  --border2:rgba(0,0,0,0.18);
+  --radius:10px;
+  --radius-lg:14px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+  /* ── Z-index design tokens ──────────────────────────────
+     Single source of truth for all stacking contexts.
+     Increment in steps of 10 so layers can be inserted later.
+     --z-card-row    : irow sits above del-bg in the same card
+     --z-sticky      : list sticky header above scrolling rows
+     --z-fab         : FAB floats above content, below tab bar
+     --z-tabs        : tab bar anchored above FAB
+     --z-fullscreen  : full-screen add/edit form
+     --z-overlay     : modal dim overlay
+     --z-toast       : always on top                          */
+  --z-card-row:1;
+  --z-sticky:20;
+  --z-fab:40;
+  --z-tabs:50;
+  --z-fullscreen:60;
+  --z-overlay:70;
+  --z-toast:80;
 }
 @media(prefers-color-scheme:dark){:root{
-  --P:#14B8A6;--Plt:#0D3D38;--Pdk:#99F6E4;--Pdim:rgba(20,184,166,.15);
-  --S:#10B981;--Slt:#064E3B;--Sdk:#A7F3D0;
-  --D:#FB7185;--Dlt:#4C0519;--Ddk:#FECDD3;
-  --W:#FCD34D;--Wlt:#451A03;--Wdk:#FDE68A;
-  --I:#60A5FA;--Ilt:#1E3A8A;--Idk:#BFDBFE;
-  --O:#FB923C;--Olt:#431407;--Odk:#FDBA74;
-  --pg:#0F172A;--cd:#1E293B;--rs:#334155;--sk:#475569;
-  --t1:#F1F5F9;--t2:#CBD5E1;--t3:#94A3B8;--t4:#64748B;
-  --b1:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);--b3:rgba(255,255,255,.22);
-  --sh1:0 1px 2px rgba(0,0,0,.3);
-  --sh2:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.2);
-  --sh3:0 4px 6px rgba(0,0,0,.4),0 2px 4px rgba(0,0,0,.2);
-  --sh4:0 10px 15px rgba(0,0,0,.4),0 4px 6px rgba(0,0,0,.2);
+  --bg:#1c1c1e;--surface:#2c2c2e;--surface2:#3a3a3c;
+  --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+  --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.20);
+  --green-lt:#04342C;--green-dk:#9FE1CB;
+  --red-lt:#501313;--red-dk:#F7C1C1;
+  --orange-lt:#4A1B0C;--orange-dk:#F0997B;
+  --blue-lt:#042C53;--blue-dk:#85B7EB;
+  --amber-lt:#412402;
 }}
 
-/* ── Root layout ── */
-html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--pg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;-webkit-overflow-scrolling:auto;-webkit-font-smoothing:antialiased}
+/* ── Root layout ───────────────────────────────────────── */
+html,body{
+  height:100%;
+  overflow:hidden;
+  overscroll-behavior:none;
+  background:var(--surface);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+  -webkit-overflow-scrolling:auto;
+}
 body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
-#app{max-width:480px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;position:relative;background:var(--pg)}
+#app{
+  max-width:480px;
+  margin:0 auto;
+  /* Cascade: 100vh first (widest support), then dvh overrides on browsers that
+     support it. dvh = Dynamic Viewport Height — shrinks when the iOS address bar
+     is visible, so content never overflows the visible viewport.             */
+  height:100vh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+}
 
-/* ── Tab bar ── */
-.tabs{display:flex;background:var(--cd);border-top:1px solid var(--b1);padding-bottom:var(--sb);flex-shrink:0;z-index:var(--zt);box-shadow:0 -1px 0 var(--b1),0 -4px 12px rgba(0,0,0,.04)}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0 6px;border:none;background:transparent;color:var(--t4);font-size:10px;cursor:pointer;gap:3px;position:relative;transition:color .18s}
-.tab.on{color:var(--P)}
-.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.tab-dot{position:absolute;top:6px;right:calc(50% - 17px);background:var(--D);color:#fff;font-size:9px;font-weight:700;line-height:15px;padding:0 4px;border-radius:99px;min-width:15px;text-align:center;display:none}
+/* ── Bottom tab bar ─────────────────────────────────────── */
+.tabs{
+  display:flex;
+  background:var(--bg);
+  border-top:0.5px solid var(--border);
+  padding-bottom:var(--safe-b);
+  flex-shrink:0;
+  z-index:var(--z-tabs);
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:9px 0 6px;border:none;background:transparent;
+  color:var(--text3);font-size:10px;cursor:pointer;gap:3px;position:relative;
+}
+.tab.on{color:var(--green)}
+.tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tab-dot{
+  position:absolute;top:6px;right:calc(50% - 17px);
+  background:var(--red);color:#fff;
+  font-size:9px;font-weight:700;line-height:15px;
+  padding:0 4px;border-radius:99px;min-width:15px;text-align:center;
+  display:none;
+}
 
-/* ── Screen ── */
+/* ── Screen shell ───────────────────────────────────────── */
 .screen{display:none;flex:1;flex-direction:column;overflow:hidden;min-height:0}
 .screen.on{display:flex}
-.scroll-body{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;padding:14px 14px calc(24px + var(--sb));min-height:0}
+
+/* scrollable body inside any screen */
+.scroll-body{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  padding:12px 14px calc(20px + var(--safe-b));
+  min-height:0;
+}
 .scroll-body::-webkit-scrollbar{display:none}
 
-/* ── Top bar ── */
-.top-bar{display:flex;align-items:center;gap:8px;padding:8px 14px 7px;padding-top:calc(8px + var(--st));background:var(--cd);flex-shrink:0;border-bottom:1px solid var(--b1);box-shadow:var(--sh1)}
+/* ── Screen top bar ─────────────────────────────────────── */
+.top-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px 7px;
+  padding-top:calc(8px + var(--safe-t));
+  background:var(--surface);
+  flex-shrink:0;
+  border-bottom:0.5px solid var(--border);
+}
 .top-bar-title{font-size:18px;font-weight:600;flex:1}
-.top-bar select{height:36px;border:1px solid var(--b2);border-radius:var(--r);background:var(--rs);color:var(--t1);padding:0 26px 0 10px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .18s}
+.top-bar select{
+  height:36px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text);
+  padding:0 26px 0 10px;
+  -webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
 .top-bar select.flex1{flex:1}
-.month-nav-btn{width:34px;height:34px;border:1px solid var(--b2);border-radius:var(--r);background:var(--cd);color:var(--t1);cursor:pointer;font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:var(--sh1);transition:background .15s}
-.month-nav-btn:active{background:var(--rs)}
+.icon-btn{
+  width:34px;height:34px;border:none;background:transparent;
+  color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;flex-shrink:0;
+}
+.icon-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.month-nav-btn{
+  width:34px;height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text);cursor:pointer;font-size:18px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+}
 
-/* ── Generic card ── */
-.card{background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);padding:16px;margin-bottom:12px;box-shadow:var(--sh2)}
-.card-title{font-size:13px;font-weight:600;color:var(--t3);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;text-transform:uppercase;letter-spacing:.04em}
-.card-title a{font-size:12px;color:var(--P);font-weight:500;cursor:pointer;text-transform:none;letter-spacing:0}
+/* ── Cards ──────────────────────────────────────────────── */
+.card{
+  background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:14px;margin-bottom:10px;
+}
+.card-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.card-title a{font-size:12px;color:var(--blue);font-weight:400;cursor:pointer}
 
-/* ── HOME hero ── */
-.hero-strip{display:flex;gap:10px;padding:10px 14px 8px;background:var(--pg);flex-shrink:0}
-.hero-card{flex:1;background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);padding:13px 14px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--sh2)}
-.hero-lbl{font-size:11px;color:var(--t4);font-weight:500;text-transform:uppercase;letter-spacing:.04em}
-.hero-val{font-size:22px;font-weight:700;letter-spacing:-.8px;color:var(--t1)}
-.hero-val.g{color:var(--S)}.hero-val.r{color:var(--D)}
-.hero-sub{font-size:11px;color:var(--t4);margin-top:1px}
-.detail-toggle{display:flex;align-items:center;justify-content:space-between;padding:5px 14px 7px;background:var(--pg);cursor:pointer;user-select:none;flex-shrink:0}
-.detail-toggle-lbl{font-size:11px;color:var(--t4)}
-.detail-toggle svg{width:14px;height:14px;stroke:var(--t4);fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s}
+/* ── HOME hero (2 primary metrics) ──────────────────────── */
+.hero-strip{
+  display:flex;gap:8px;
+  padding:8px 14px 6px;
+  background:var(--surface);
+  flex-shrink:0;
+}
+.hero-card{
+  flex:1;background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:11px 13px;
+  display:flex;flex-direction:column;gap:3px;
+}
+.hero-lbl{font-size:11px;color:var(--text3);font-weight:500}
+.hero-val{font-size:22px;font-weight:700;letter-spacing:-.6px}
+.hero-val.g{color:var(--green)}.hero-val.r{color:var(--red)}
+.hero-sub{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* collapsible detail accordion */
+.detail-toggle{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:5px 14px 7px;background:var(--surface);
+  cursor:pointer;user-select:none;flex-shrink:0;
+}
+.detail-toggle-lbl{font-size:11px;color:var(--text3)}
+.detail-toggle svg{width:14px;height:14px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s}
 .detail-toggle.open svg{transform:rotate(180deg)}
-.detail-panel{display:none;padding:0 14px 10px;background:var(--pg);flex-shrink:0}
-.detail-panel.open{display:flex;gap:8px}
-.detail-tile{flex:1;background:var(--cd);border:1px solid var(--b1);border-radius:var(--r);padding:8px 10px;box-shadow:var(--sh1)}
-.detail-lbl{font-size:10px;color:var(--t4);margin-bottom:3px;white-space:nowrap}
-.detail-val{font-size:14px;font-weight:700;letter-spacing:-.3px;white-space:nowrap;color:var(--t1)}
-.detail-val.g{color:var(--S)}.detail-val.r{color:var(--D)}.detail-val.o{color:var(--O)}
+.detail-panel{
+  display:none;padding:0 14px 8px;background:var(--surface);flex-shrink:0;
+}
+.detail-panel.open{display:flex;gap:7px}
+.detail-tile{
+  flex:1;background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;
+}
+.detail-lbl{font-size:10px;color:var(--text3);margin-bottom:3px;white-space:nowrap}
+.detail-val{font-size:14px;font-weight:600;letter-spacing:-.3px;white-space:nowrap}
+.detail-val.g{color:var(--green)}.detail-val.r{color:var(--red)}.detail-val.o{color:var(--orange)}
 
-/* ── Budget bar ── */
-.bud-bar{display:flex;align-items:center;gap:10px;padding:6px 14px 8px;background:var(--pg);flex-shrink:0}
-.bud-bar-lbl{font-size:11px;color:var(--t3);font-weight:500;white-space:nowrap;flex-shrink:0}
-.bud-bar-track{flex:1;height:5px;background:var(--sk);border-radius:99px;overflow:hidden}
-.bud-bar-fill{height:100%;background:var(--P);border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.bud-bar-fill.warn{background:var(--W)}.bud-bar-fill.over{background:var(--D)}
-.bud-bar-pct{font-size:11px;font-weight:700;color:var(--t3);white-space:nowrap;flex-shrink:0;min-width:32px;text-align:right}
+/* ── HOME — summary strip (kept for non-home screens) ───── */
+.summary-strip{
+  display:flex;gap:7px;
+  padding:7px 14px;
+  background:var(--surface);
+  flex-shrink:0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.summary-strip::-webkit-scrollbar{display:none}
+.sum-card{
+  background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius);padding:8px 10px;
+  flex:1;min-width:72px;flex-shrink:0;
+}
+.sum-lbl{font-size:10px;color:var(--text3);margin-bottom:3px;white-space:nowrap}
+.sum-val{font-size:15px;font-weight:700;letter-spacing:-.4px;white-space:nowrap}
+.sum-val.g{color:var(--green)}.sum-val.r{color:var(--red)}.sum-val.o{color:var(--orange)}
 
-/* ── Item card ── */
-.icard{background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);margin-bottom:9px;overflow:hidden;position:relative;box-shadow:var(--sh1);transition:box-shadow .18s,transform .18s}
-.icard:active{transform:scale(.99);box-shadow:none}
-.del-bg{position:absolute;right:0;top:0;bottom:0;width:70px;background:var(--D);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;border-radius:0 var(--rl) var(--rl) 0}
-.del-bg svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.irow{display:flex;align-items:center;gap:10px;padding:13px 14px;background:var(--cd);position:relative;z-index:var(--zr);transition:transform .22s cubic-bezier(.4,0,.2,1);will-change:transform}
-.ichk{width:20px;height:20px;accent-color:var(--P);cursor:pointer;flex-shrink:0}
-/* Fix 3a: iinfo is a native <button> — reset all chrome */
-.iinfo{flex:1;min-width:0;cursor:pointer;border:none;background:transparent;padding:0;text-align:left;font:inherit;color:inherit;display:block;border-radius:4px;transition:opacity .15s}
-.iinfo:active{opacity:.68}
-.iinfo:focus-visible{outline:2px solid var(--P);outline-offset:2px;border-radius:6px}
-.iname{font-size:14px;font-weight:500;color:var(--t1);display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.iname.done{color:var(--t4);text-decoration:line-through;text-decoration-color:var(--t3)}
-.isub{font-size:11px;color:var(--t4);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.overdue-dot{width:6px;height:6px;background:var(--D);border-radius:50%;flex-shrink:0}
-.iright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
-.iamt{font-size:14px;font-weight:700;letter-spacing:-.3px}
-.iamt.g{color:var(--S)}.iamt.r{color:var(--D)}.iamt.o{color:var(--O)}
-/* Badges — soft tint + high-contrast text + border for greyscale A11y */
-.badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;letter-spacing:.01em}
-.badge.g{background:var(--Slt);color:var(--Sdk);border:1px solid rgba(5,150,105,.25)}
-.badge.r{background:var(--Dlt);color:var(--Ddk);border:1px solid rgba(225,29,72,.25)}
-.badge.o{background:var(--Olt);color:var(--Odk);border:1px solid rgba(234,88,12,.25)}
+/* ── Budget progress bar ────────────────────────────────── */
+.bud-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:5px 14px 6px;background:var(--surface);flex-shrink:0;
+}
+.bud-bar-lbl{font-size:11px;color:var(--text2);font-weight:500;white-space:nowrap;flex-shrink:0}
+.bud-bar-track{flex:1;height:4px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.bud-bar-fill{height:100%;background:var(--green);border-radius:99px;transition:width .5s ease}
+.bud-bar-fill.warn{background:var(--amber)}.bud-bar-fill.over{background:var(--red)}
+.bud-bar-pct{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap;flex-shrink:0;min-width:28px;text-align:right}
 
-/* ── Section label ── */
-.sec-lbl{font-size:11px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 6px 2px}
+/* ── UX4: Semantic status badges (WCAG accessible) ──────── */
+/* Badges already carry text labels (已繳/未繳/代墊中/已收回).
+   We reinforce shape + pattern cues so they work without color. */
+.badge{
+  font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;
+  white-space:nowrap;
+  /* Accessible: also uses border to distinguish paid vs unpaid even in greyscale */
+}
+.badge.g{background:var(--green-lt);color:var(--green-dk);border:0.5px solid var(--green)}
+.badge.r{background:var(--red-lt);color:var(--red-dk);border:0.5px solid var(--red)}
+.badge.o{background:var(--orange-lt);color:var(--orange-dk);border:0.5px solid var(--orange)}
 
-/* ── Reminders ── */
-.rem-box{margin-bottom:12px}
-.rem-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
-.rem-hdr-lbl{font-size:12px;font-weight:600;color:var(--t2);display:flex;align-items:center;gap:5px}
-.rem-hdr-lbl svg{width:13px;height:13px;stroke:var(--D);fill:none;stroke-width:2;stroke-linecap:round}
-.rem-dismiss{font-size:11px;color:var(--t4);cursor:pointer;padding:3px 9px;border:1px solid var(--b2);border-radius:99px;background:var(--cd)}
-.rem-row{display:flex;align-items:center;gap:10px;background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);padding:11px 13px;margin-bottom:7px;cursor:pointer;box-shadow:var(--sh1);transition:box-shadow .15s}
-.rem-row:active{opacity:.75;box-shadow:none}
-.rem-row.overdue{border-left:3px solid var(--D)}
-.rem-row.due-soon{border-left:3px solid var(--W)}
-.rem-row.advance{border-left:3px solid var(--O)}
-.rem-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.rem-ico svg{width:14px;height:14px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.rem-ico.r{background:var(--Dlt)}.rem-ico.r svg{stroke:var(--D)}
-.rem-ico.a{background:var(--Wlt)}.rem-ico.a svg{stroke:var(--W)}
-.rem-ico.o{background:var(--Olt)}.rem-ico.o svg{stroke:var(--O)}
-.rem-body{flex:1;min-width:0}
-.rem-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--t1)}
-.rem-meta{font-size:11px;color:var(--t4);margin-top:1px}
-.rem-amt{font-size:13px;font-weight:700;flex-shrink:0}
-.rem-amt.r{color:var(--D)}.rem-amt.a{color:var(--W)}.rem-amt.o{color:var(--O)}
+/* ── UX6: Enhanced empty states with CTA ───────────────── */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:16px 24px 24px;text-align:center;min-height:60%;
+}
+.empty-state svg{width:80px;height:80px;margin-bottom:14px;opacity:.8}
+.empty-state h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-state p{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:14px;max-width:200px}
+.empty-cta{
+  height:40px;padding:0 24px;
+  background:var(--green);color:#fff;border:none;border-radius:99px;
+  font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;
+  display:block;width:fit-content;
+}
+.empty-cta-sec{
+  height:36px;padding:0 20px;
+  background:transparent;color:var(--text2);
+  border:0.5px solid var(--border2);border-radius:99px;
+  font-size:13px;cursor:pointer;display:block;width:fit-content;
+}
+.empty-msg{
+  display:flex;flex-direction:column;align-items:center;
+  text-align:center;color:var(--text3);font-size:14px;padding:32px 20px;
+}
+.empty-msg svg{width:44px;height:44px;stroke:var(--text3);fill:none;stroke-width:1.4;stroke-linecap:round;margin-bottom:10px;opacity:.5}
 
-/* ── Banners ── */
-.copy-banner{background:var(--Pdim);border:1px solid rgba(15,118,110,.3);border-radius:var(--rl);padding:10px 13px;display:flex;align-items:center;gap:9px;margin-bottom:10px;cursor:pointer}
-.copy-banner svg{width:16px;height:16px;stroke:var(--P);fill:none;stroke-width:1.8;flex-shrink:0}
-.copy-banner p{font-size:13px;color:var(--Pdk);flex:1;line-height:1.4}
-.copy-banner span{font-size:13px;color:var(--P);font-weight:700;white-space:nowrap}
-.adv-banner{background:var(--Olt);border:1px solid rgba(234,88,12,.3);border-radius:var(--rl);padding:10px 13px;display:flex;align-items:center;gap:9px;margin-bottom:10px}
-.adv-banner svg{width:16px;height:16px;stroke:var(--O);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
-.adv-banner p{font-size:13px;color:var(--Odk);flex:1;line-height:1.4}
-
-/* ── Empty states ── */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 28px 28px;text-align:center;min-height:100%}
-.empty-state svg{width:80px;height:80px;margin-bottom:18px;opacity:.7}
-.empty-state h3{font-size:16px;font-weight:600;margin-bottom:7px;color:var(--t1)}
-.empty-state p{font-size:13px;color:var(--t4);line-height:1.7;margin-bottom:20px;max-width:210px}
-.empty-cta{height:42px;padding:0 26px;background:var(--P);color:#fff;border:none;border-radius:99px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:9px;display:block;width:fit-content;box-shadow:0 2px 8px var(--Pdim);transition:filter .15s}
-.empty-cta:active{filter:brightness(.92)}
-.empty-cta-sec{height:38px;padding:0 22px;background:transparent;color:var(--t3);border:1px solid var(--b3);border-radius:99px;font-size:13px;cursor:pointer;display:block;width:fit-content;transition:background .15s}
-.empty-cta-sec:active{background:var(--rs)}
-.empty-msg{display:flex;flex-direction:column;align-items:center;text-align:center;color:var(--t4);font-size:14px;padding:36px 20px}
-.empty-msg svg{width:44px;height:44px;stroke:var(--t4);fill:none;stroke-width:1.4;stroke-linecap:round;margin-bottom:12px;opacity:.45}
-
-/* ── List screen ── */
-.list-sticky{position:sticky;top:0;z-index:var(--zs);background:var(--pg);will-change:transform}
+/* ── UX3: Sticky filters in list view ───────────────────── */
+.list-sticky{
+  position:sticky;top:0;z-index:var(--z-sticky);
+  background:var(--surface);
+  /* Force GPU layer so sticky doesn't cause repaints on scroll */
+  will-change:transform;
+}
 .range-bar{padding:8px 14px 6px}
 .range-row{display:flex;align-items:center;gap:6px}
-.range-row select{flex:1;height:34px;border:1px solid var(--b2);border-radius:var(--r);background:var(--cd);color:var(--t1);padding:0 22px 0 8px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 4L8 1' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;font-size:14px}
-.range-sep{font-size:13px;color:var(--t4);flex-shrink:0}
-.range-info{font-size:11px;color:var(--t4);margin-top:5px}
-.search-wrap{position:relative;padding:8px 14px 6px;background:var(--pg);flex-shrink:0}
-.search-wrap svg{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--t4);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
-.search-input{width:100%;height:38px;border:1px solid var(--b2);border-radius:var(--r);background:var(--cd);color:var(--t1);padding:0 10px 0 34px;font-size:15px;box-shadow:var(--sh1);transition:border-color .18s,box-shadow .18s}
-.search-input:focus{outline:none;border-color:var(--P);box-shadow:0 0 0 3px var(--Pdim)}
-.filter-row{display:flex;gap:6px;padding:6px 14px 8px;background:var(--pg);flex-shrink:0}
-.filter-btn{flex:1;height:32px;border:1px solid var(--b2);border-radius:var(--r);background:var(--cd);color:var(--t3);cursor:pointer;font-size:13px;box-shadow:var(--sh1);transition:all .15s}
-.filter-btn.on{background:var(--Pdim);border-color:var(--P);color:var(--Pdk);font-weight:600;box-shadow:0 0 0 1px var(--P)}
-.list-footer{text-align:right;font-size:11px;color:var(--t4);padding:8px 2px 0}
+.range-row select{flex:1;height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);padding:0 22px 0 8px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 4L8 1' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;font-size:14px}
+.range-sep{font-size:13px;color:var(--text3);flex-shrink:0}
+.range-info{font-size:11px;color:var(--text3);margin-top:5px}
+.search-wrap{position:relative;padding:8px 14px 6px;background:var(--surface);flex-shrink:0}
+.search-wrap svg{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search-input{
+  width:100%;height:36px;
+  border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text);padding:0 10px 0 32px;font-size:15px;
+}
+.search-input:focus{outline:2px solid var(--green);outline-offset:-1px}
+.filter-row{
+  display:flex;gap:6px;padding:6px 14px 8px;
+  background:var(--surface);flex-shrink:0;
+}
+.filter-btn{
+  flex:1;height:32px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text2);cursor:pointer;font-size:13px;
+}
+.filter-btn.on{background:var(--green-lt);border-color:var(--green);color:var(--green-dk);font-weight:600}
+.list-footer{text-align:right;font-size:13px;color:var(--text3);padding:6px 2px 0}
 
-/* ── Overlays & modals ── */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:var(--zo);align-items:flex-end;justify-content:center;overflow:hidden;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
-.overlay.on{display:flex}
-.sheet{background:var(--cd);border-radius:20px 20px 0 0;padding:16px 16px calc(20px + var(--sb));width:100%;max-width:480px;max-height:88vh;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;box-shadow:var(--sh4)}
-.sheet-handle{width:40px;height:4px;background:var(--sk);border-radius:2px;margin:0 auto 16px;pointer-events:none}
-.sheet h3{font-size:18px;font-weight:600;margin-bottom:16px}
-.sheet-btns{display:flex;gap:9px;margin-top:16px}
-.btn{flex:1;height:46px;border:1px solid var(--b2);border-radius:var(--rl);cursor:pointer;background:var(--rs);color:var(--t1);font-weight:500;font-size:15px;transition:background .15s}
-.btn:active{background:var(--sk)}
-.btn.primary{background:var(--P);color:#fff;border-color:var(--P);box-shadow:0 2px 8px var(--Pdim)}
-.btn.primary:active{filter:brightness(.92)}
-.btn.danger{background:var(--D);color:#fff;border-color:var(--D)}
+/* ── UX5: Swipe delete — reveal button requires explicit tap ─
+   del-bg becomes a real tappable button, not just a background.
+   Also adding an Undo action to the toast (handled in JS).     */
+.del-bg{
+  position:absolute;right:0;top:0;bottom:0;width:70px;
+  background:var(--red);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:#fff;font-size:11px;font-weight:600;
+  cursor:pointer;                 /* UX5: explicit tap target */
+  border-radius:0 var(--radius-lg) var(--radius-lg) 0;
+}
+.del-bg svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-/* ── Form fields ── */
-.field{margin-bottom:14px}
-.field label{font-size:11px;font-weight:600;color:var(--t3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
-.field input,.field select,.field textarea{width:100%;height:46px;border:1px solid var(--b2);border-radius:var(--r);background:var(--rs);color:var(--t1);padding:0 13px;font-size:16px;transition:border-color .18s,box-shadow .18s}
-.field textarea{height:72px;padding:11px 13px;resize:none}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--P);box-shadow:0 0 0 3px var(--Pdim);background:var(--cd)}
-.field select{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:30px}
-.radio-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:5px}
-.radio-opt{display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--t1);padding:5px 0;font-size:15px}
-.radio-opt input[type=radio]{width:18px;height:18px;accent-color:var(--P);cursor:pointer;flex-shrink:0}
-.fdivider{height:1px;background:var(--b1);margin:16px 0}
-.field-note{font-size:11px;color:var(--t4);margin-top:5px}
-.adv-hint-box{background:var(--Olt);border:1px solid rgba(234,88,12,.25);border-radius:var(--r);padding:10px 12px;margin-bottom:14px}
-.adv-hint-box p{font-size:12px;color:var(--Odk);line-height:1.55}
-
-/* ── Amount widget ── */
-.amt-wrap{width:100%;min-height:46px;border:1px solid var(--b2);border-radius:var(--r);background:var(--rs);color:var(--t1);display:flex;align-items:center;padding:0 13px;position:relative;cursor:text;transition:border-color .18s,box-shadow .18s}
-.amt-wrap:focus-within{border-color:var(--P);box-shadow:0 0 0 3px var(--Pdim);background:var(--cd)}
-.amt-unit{font-size:15px;color:var(--t4);margin-right:5px;flex-shrink:0}
-.amt-disp{font-size:22px;font-weight:700;letter-spacing:-.7px;flex:1;color:var(--t1)}
-.amt-disp.ph{color:var(--t4);font-weight:400;font-size:16px}
-.amt-input{position:absolute;inset:0;opacity:0;border:none;background:transparent;font-size:16px;width:100%;height:100%;cursor:text}
-
-/* ── Progressive disclosure toggle ── */
-.adv-toggle{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 2px;cursor:pointer;color:var(--t3);font-size:13px;border:none;background:transparent;width:100%}
+/* ── UX7: Progressive disclosure — advanced toggle ──────── */
+.adv-toggle{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:10px 0 2px;cursor:pointer;color:var(--text2);font-size:13px;
+  border:none;background:transparent;width:100%;
+}
 .adv-toggle svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s}
 .adv-toggle.open svg{transform:rotate(180deg)}
 .adv-fields{display:none;padding-top:4px}
 .adv-fields.open{display:block}
+/* Visual separator above advanced section */
+.adv-fields .fdivider{margin:8px 0 12px}
 
-/* ── Full-screen form ── */
-.fsform{position:fixed;inset:0;background:var(--pg);z-index:var(--zfs);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow:hidden;max-width:480px;left:50%;margin-left:-240px}
-@media(max-width:480px){.fsform{left:0;margin-left:0}}
-.fsform.on{transform:translateX(0)}
-.fs-nav{display:flex;align-items:center;gap:8px;background:var(--cd);border-bottom:1px solid var(--b1);padding:10px 14px;flex-shrink:0;padding-top:calc(10px + var(--st));box-shadow:var(--sh1)}
-.fs-back{width:34px;height:34px;border:none;background:transparent;color:var(--t1);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;transition:background .15s}
-.fs-back:active{background:var(--rs)}
-.fs-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.fs-title{font-size:17px;font-weight:600;flex:1}
-.fs-del{height:34px;padding:0 13px;background:transparent;color:var(--D);border:1px solid rgba(225,29,72,.4);border-radius:99px;cursor:pointer;font-size:14px;transition:background .15s}
-.fs-del:active{background:var(--Dlt)}
-.fs-save{height:34px;padding:0 20px;background:var(--P);color:#fff;border:none;border-radius:99px;cursor:pointer;font-weight:600;font-size:14px;box-shadow:0 2px 8px var(--Pdim);transition:filter .15s}
-.fs-save:active{filter:brightness(.92)}
-.fs-body{flex:1;overflow-y:auto;padding:20px 16px calc(28px + var(--sb));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+/* ── Add button ─────────────────────────────────────────── */
+.add-btn{
+  width:100%;height:44px;
+  border:1.5px dashed var(--border2);border-radius:var(--radius-lg);
+  background:transparent;color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:10px;
+}
+.add-btn svg{width:17px;height:17px;stroke:var(--green);fill:none;stroke-width:2.2;stroke-linecap:round;flex-shrink:0}
 
-/* ── FAB ── */
-.fab{position:fixed;right:18px;bottom:calc(56px + var(--sb));width:52px;height:52px;background:var(--P);border:none;border-radius:50%;box-shadow:0 4px 14px var(--Pdim),0 2px 6px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:var(--zf);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s,visibility .2s,transform .15s,box-shadow .15s}
+/* ── FAB ─────────────────────────────────────────────────── */
+.fab{
+  position:fixed;right:18px;
+  /* Tab bar is 9+6+22+3 ≈ 40px content + padding-bottom=safe-b.
+     Using 56px as a safe constant clears the bar on all device sizes. */
+  bottom:calc(56px + var(--safe-b));
+  width:50px;height:50px;
+  background:var(--green);border:none;border-radius:50%;
+  box-shadow:0 2px 10px rgba(29,158,117,.4);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:var(--z-fab);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .2s,visibility .2s,transform .15s;
+}
 .fab.on{opacity:1;visibility:visible;pointer-events:auto}
-.fab:active{transform:scale(.92);box-shadow:0 2px 6px var(--Pdim)}
+.fab:active{transform:scale(.91)}
 .fab svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
 
-/* ── Cat tags ── */
-.cat-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
-.cat-tag{display:flex;align-items:center;gap:4px;padding:5px 11px;border:1px solid var(--b2);border-radius:99px;font-size:13px;background:var(--rs);color:var(--t1);cursor:pointer}
-.cat-del{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;cursor:pointer;flex-shrink:0}
-.cat-add-row{display:flex;gap:8px}
-.cat-add-row input{flex:1;height:40px;border:1px solid var(--b2);border-radius:var(--r);background:var(--rs);color:var(--t1);padding:0 11px;font-size:16px}
-.cat-add-row button{height:40px;padding:0 16px;border:none;border-radius:var(--r);background:var(--P);color:#fff;cursor:pointer;font-size:14px;font-weight:600}
+/* ── Section label ───────────────────────────────────────── */
+.sec-lbl{
+  font-size:11px;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.06em;
+  margin:12px 0 5px 2px;
+}
 
-/* ── Toggles ── */
-.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--b1)}
-.toggle-row:last-child{border-bottom:none}
-.toggle-lbl{font-size:15px;color:var(--t1)}
-.toggle-sub{font-size:11px;color:var(--t4);margin-top:2px}
-.toggle{position:relative;width:44px;height:26px;flex-shrink:0}
-.toggle input{opacity:0;width:0;height:0;position:absolute}
-.toggle-track{position:absolute;inset:0;background:var(--sk);border-radius:13px;transition:background .2s}
-.toggle input:checked~.toggle-track{background:var(--P)}
-.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
-.remind-info-box{background:var(--Ilt);border:1px solid rgba(37,99,235,.2);border-radius:var(--r);padding:11px 13px;margin-bottom:13px}
-.remind-info-box p{font-size:12px;color:var(--Idk);line-height:1.6}
+/* ── Item card ───────────────────────────────────────────── */
+.icard{
+  background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:8px;
+  overflow:hidden;position:relative;
+}
+.del-bg{
+  position:absolute;right:0;top:0;bottom:0;width:70px;
+  background:var(--red);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;color:#fff;font-size:11px;font-weight:600;
+}
+.del-bg svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.irow{
+  display:flex;align-items:center;gap:10px;padding:12px 13px;
+  background:var(--bg);position:relative;z-index:var(--z-card-row);
+  transition:transform .22s ease;will-change:transform;
+}
+.ichk{width:21px;height:21px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+/* Fix 3: iinfo is now a <button> — reset all button chrome so it looks like
+   a plain block. Native button gives Enter+Space keyboard support for free. */
+.iinfo{
+  flex:1;min-width:0;cursor:pointer;
+  border:none;background:transparent;
+  padding:0;text-align:left;
+  font:inherit;color:inherit;
+  display:block;                /* fill the flex row slot */
+}
+.iinfo:active{opacity:.7}
+.iname{
+  font-size:14px;font-weight:500;
+  display:flex;align-items:center;gap:5px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.iname.done{color:var(--text3);text-decoration:line-through}
+.isub{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.overdue-dot{width:6px;height:6px;background:var(--red);border-radius:50%;flex-shrink:0}
+.iright{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.iamt{font-size:14px;font-weight:700}
+.iamt.g{color:var(--green)}.iamt.r{color:var(--red)}.iamt.o{color:var(--orange)}
+.badge{font-size:10px;padding:2px 7px;border-radius:99px;font-weight:600;white-space:nowrap}
+.badge.g{background:var(--green-lt);color:var(--green-dk)}
+.badge.r{background:var(--red-lt);color:var(--red-dk)}
+.badge.o{background:var(--orange-lt);color:var(--orange-dk)}
 
-/* ── Settings ── */
-.settings-group{background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);margin-bottom:10px;overflow:hidden;box-shadow:var(--sh1)}
-.settings-group-title{font-size:11px;font-weight:600;color:var(--t4);text-transform:uppercase;letter-spacing:.06em;padding:13px 14px 6px}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px;border-top:1px solid var(--b1);cursor:pointer;transition:background .15s}
-.settings-row:first-of-type{border-top:none}
-.settings-row:active{background:var(--rs)}
-.settings-row-lbl{font-size:15px;color:var(--t1)}
-.settings-row-sub{font-size:11px;color:var(--t4);margin-top:2px}
-.settings-row-right{display:flex;align-items:center;gap:6px;color:var(--t4)}
-.settings-row-right svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.app-info-card{background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);padding:22px 16px;text-align:center;margin-top:22px;box-shadow:var(--sh2)}
-.app-info-icon{width:64px;height:64px;background:var(--P);border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px var(--Pdim)}
-.app-info-icon svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
-.app-info-name{font-size:18px;font-weight:700;margin-bottom:4px}
-.app-info-version{font-size:13px;color:var(--t4);margin-bottom:16px}
-.app-info-rows{border-top:1px solid var(--b1);padding-top:14px}
-.app-info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}
-.app-info-row span:first-child{color:var(--t4)}
-.app-info-row span:last-child{color:var(--t1);font-weight:500}
+/* ── Reminders ───────────────────────────────────────────── */
+.rem-box{margin-bottom:10px}
+.rem-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.rem-hdr-lbl{font-size:12px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:5px}
+.rem-hdr-lbl svg{width:13px;height:13px;stroke:var(--red);fill:none;stroke-width:2;stroke-linecap:round}
+.rem-dismiss{font-size:11px;color:var(--text3);cursor:pointer;padding:2px 8px;border:0.5px solid var(--border2);border-radius:99px;background:var(--bg)}
+.rem-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:10px 12px;margin-bottom:7px;cursor:pointer;
+}
+.rem-row:active{opacity:.75}
+.rem-row.overdue{border-left:3px solid var(--red)}
+.rem-row.due-soon{border-left:3px solid var(--amber)}
+.rem-row.advance{border-left:3px solid var(--orange)}
+.rem-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rem-ico svg{width:14px;height:14px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rem-ico.r{background:var(--red-lt)}.rem-ico.r svg{stroke:var(--red)}
+.rem-ico.a{background:var(--amber-lt)}.rem-ico.a svg{stroke:var(--amber)}
+.rem-ico.o{background:var(--orange-lt)}.rem-ico.o svg{stroke:var(--orange)}
+.rem-body{flex:1;min-width:0}
+.rem-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rem-meta{font-size:11px;color:var(--text3);margin-top:1px}
+.rem-amt{font-size:13px;font-weight:600;flex-shrink:0}
+.rem-amt.r{color:var(--red)}.rem-amt.a{color:var(--amber)}.rem-amt.o{color:var(--orange)}
 
-/* ── Chart ── */
-.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
-.stat-tile{background:var(--cd);border:1px solid var(--b1);border-radius:var(--rl);padding:13px;box-shadow:var(--sh1)}
-.stat-lbl{font-size:10px;color:var(--t4);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
-.stat-val{font-size:18px;font-weight:700;letter-spacing:-.4px}
-.stat-val.g{color:var(--S)}.stat-val.r{color:var(--D)}.stat-val.o{color:var(--O)}
-.bud-total-card{background:var(--Ilt);border:1px solid rgba(37,99,235,.2);border-radius:var(--rl);padding:14px;margin-bottom:12px;box-shadow:var(--sh1)}
-.bud-total-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
-.bud-total-lbl{font-size:11px;font-weight:600;color:var(--Idk);text-transform:uppercase;letter-spacing:.04em}
-.bud-total-nums{font-size:12px;color:var(--Idk);text-align:right}
-.bud-total-nums strong{font-size:20px;font-weight:700;display:block;letter-spacing:-.5px;color:var(--I)}
-.bud-total-track{background:rgba(37,99,235,.15);border-radius:4px;height:7px;overflow:hidden}
-.bud-total-fill{height:100%;background:var(--I);border-radius:4px;transition:width .5s cubic-bezier(.4,0,.2,1)}
-.bud-total-fill.warn{background:var(--W)}.bud-total-fill.over{background:var(--D)}
+/* ── Copy banner ─────────────────────────────────────────── */
+.copy-banner{
+  background:var(--green-lt);border:0.5px solid var(--green);
+  border-radius:var(--radius-lg);padding:8px 12px;
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;
+}
+.copy-banner svg{width:15px;height:15px;stroke:var(--green);fill:none;stroke-width:1.8;flex-shrink:0}
+.copy-banner p{font-size:13px;color:var(--green-dk);flex:1;line-height:1.3}
+.copy-banner span{font-size:13px;color:var(--green-dk);font-weight:600;white-space:nowrap}
+
+/* ── Advance banner ──────────────────────────────────────── */
+.adv-banner{
+  background:var(--orange-lt);border:0.5px solid var(--orange);
+  border-radius:var(--radius-lg);padding:8px 12px;
+  display:flex;align-items:center;gap:8px;margin-bottom:8px;
+}
+.adv-banner svg{width:15px;height:15px;stroke:var(--orange);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.adv-banner p{font-size:13px;color:var(--orange-dk);flex:1;line-height:1.3}
+
+/* ── Empty state ─────────────────────────────────────────── */
+/* Uses flex to centre vertically inside the scroll-body without fixed padding.
+   justify-content:center means it auto-adapts to whatever space is available —
+   no hard-coded top padding that wastes space on smaller phones.            */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:16px 24px 24px;text-align:center;
+  min-height:100%;         /* fill the scroll-body height */
+}
+.empty-state svg{width:80px;height:80px;margin-bottom:14px;opacity:.8}
+.empty-state h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.empty-state p{font-size:13px;color:var(--text3);line-height:1.6;margin-bottom:18px;max-width:200px}
+.empty-cta{
+  height:40px;padding:0 24px;
+  background:var(--green);color:#fff;border:none;border-radius:99px;
+  font-size:14px;font-weight:600;cursor:pointer;
+}
+
+/* ── List screen ─────────────────────────────────────────── */
+.range-bar{
+  padding:8px 14px 6px;background:var(--surface);
+  flex-shrink:0;border-bottom:0.5px solid var(--border);
+}
+.range-row{display:flex;align-items:center;gap:6px}
+.range-row select{flex:1;height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);padding:0 22px 0 8px;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6'%3E%3Cpath d='M1 1l3.5 4L8 1' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;font-size:14px}
+.range-sep{font-size:13px;color:var(--text3);flex-shrink:0}
+.range-info{font-size:11px;color:var(--text3);margin-top:5px}
+.search-wrap{position:relative;padding:8px 14px 6px;background:var(--surface);flex-shrink:0}
+.search-wrap svg{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search-input{
+  width:100%;height:36px;
+  border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text);padding:0 10px 0 32px;font-size:15px;
+}
+.search-input:focus{outline:2px solid var(--green);outline-offset:-1px}
+.filter-row{
+  display:flex;gap:6px;padding:8px 14px 8px;
+  background:var(--surface);flex-shrink:0;
+  border-bottom:0.5px solid var(--border);
+}
+.filter-btn{
+  flex:1;height:32px;border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--bg);color:var(--text2);cursor:pointer;font-size:13px;
+}
+.filter-btn.on{background:var(--green-lt);border-color:var(--green);color:var(--green-dk);font-weight:600}
+.list-footer{text-align:right;font-size:13px;color:var(--text3);padding:6px 2px 0}
+.empty-msg{text-align:center;color:var(--text3);font-size:14px;padding:40px 0}
+
+/* ── Chart screen ────────────────────────────────────────── */
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.stat-tile{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px}
+.stat-lbl{font-size:10px;color:var(--text3);margin-bottom:4px}
+.stat-val{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.stat-val.g{color:var(--green)}.stat-val.r{color:var(--red)}.stat-val.o{color:var(--orange)}
+.bud-total-card{
+  background:var(--blue-lt);border:0.5px solid var(--blue);
+  border-radius:var(--radius-lg);padding:12px;margin-bottom:10px;
+}
+.bud-total-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:7px}
+.bud-total-lbl{font-size:12px;color:var(--blue-dk);font-weight:600}
+.bud-total-nums{font-size:12px;color:var(--blue-dk);text-align:right}
+.bud-total-nums strong{font-size:18px;font-weight:700;display:block;letter-spacing:-.5px}
+.bud-total-track{background:rgba(55,138,221,0.2);border-radius:4px;height:7px;overflow:hidden}
+.bud-total-fill{height:100%;background:var(--blue);border-radius:4px;transition:width .4s}
+.bud-total-fill.warn{background:var(--amber)}.bud-total-fill.over{background:var(--red)}
 .pie-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
-.pie-legend{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
-.leg-item{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--t2);min-width:0}
+.pie-legend{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);min-width:0}
 .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.bud-cat-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px;align-items:center}
-.bud-cat-track{background:var(--sk);border-radius:4px;height:5px;overflow:hidden;margin-bottom:9px}
+.bud-cat-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;align-items:center}
+.bud-cat-track{background:var(--surface2);border-radius:4px;height:5px;overflow:hidden;margin-bottom:8px}
 .bud-cat-fill{height:100%;border-radius:4px;transition:width .4s}
 
-/* ── Trend ── */
-.yr-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
-.yr-chip{height:30px;padding:0 13px;border:1px solid var(--b2);border-radius:99px;background:var(--cd);color:var(--t3);cursor:pointer;display:flex;align-items:center;gap:5px;font-size:13px;white-space:nowrap;box-shadow:var(--sh1);transition:all .15s}
-.yr-chip.on{color:#fff;font-weight:600;border-color:transparent;box-shadow:var(--sh2)}
+/* ── Trend screen ────────────────────────────────────────── */
+.yr-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.yr-chip{
+  height:30px;padding:0 12px;
+  border:0.5px solid var(--border2);border-radius:99px;
+  background:var(--bg);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;gap:5px;font-size:13px;white-space:nowrap;
+}
+.yr-chip.on{color:#fff;font-weight:600;border-color:transparent}
 .yr-chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.chart-legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:11px}
-.chart-leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3)}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px}
+.chart-leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
 .chart-leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.trend-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
+.trend-stat-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 
-/* ── Export ── */
-.export-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:11px}
-.export-btn{height:40px;border:1px solid var(--b2);border-radius:var(--r);background:var(--cd);color:var(--t3);cursor:pointer;font-size:13px;box-shadow:var(--sh1);transition:background .15s}
-.export-btn:active{background:var(--rs)}
+/* ── Overlays and modals ─────────────────────────────────── */
+.overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.45);z-index:var(--z-overlay);
+  align-items:flex-end;justify-content:center;
+  overflow:hidden;
+}
+.overlay.on{display:flex}
+.sheet{
+  background:var(--bg);
+  border-radius:16px 16px 0 0;
+  padding:16px 16px calc(18px + var(--safe-b));
+  width:100%;max-width:480px;max-height:88vh;
+  overflow-y:auto;
+  touch-action:pan-y;overscroll-behavior:contain;
+}
+.sheet-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;pointer-events:none}
+.sheet h3{font-size:17px;font-weight:600;margin-bottom:14px}
+.sheet-btns{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;height:46px;border:0.5px solid var(--border2);border-radius:var(--radius-lg);cursor:pointer;background:var(--surface);color:var(--text);font-weight:500;font-size:15px}
+.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.danger{background:var(--red);color:#fff;border-color:var(--red)}
 
-/* ── Toast ── */
-.toast{position:fixed;bottom:calc(68px + var(--sb) + 12px);left:50%;transform:translateX(-50%) translateY(14px);background:var(--t1);color:var(--cd);font-size:14px;padding:10px 16px;border-radius:99px;opacity:0;transition:all .25s cubic-bezier(.4,0,.2,1);pointer-events:none;white-space:nowrap;z-index:var(--zT);max-width:92vw;display:flex;align-items:center;gap:6px;box-shadow:var(--sh3)}
+/* ── Form fields ─────────────────────────────────────────── */
+.field{margin-bottom:13px}
+.field label{font-size:13px;color:var(--text2);display:block;margin-bottom:5px;font-weight:500}
+.field input,.field select,.field textarea{
+  width:100%;height:46px;
+  border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--surface);color:var(--text);padding:0 12px;font-size:16px;
+}
+.field textarea{height:70px;padding:10px 12px;resize:none}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--green);outline-offset:-1px;background:var(--bg)}
+.field select{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+.radio-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:4px}
+.radio-opt{display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--text);padding:5px 0}
+.radio-opt input[type=radio]{width:18px;height:18px;accent-color:var(--green);cursor:pointer;flex-shrink:0}
+.fdivider{height:0.5px;background:var(--border);margin:16px 0}
+.field-note{font-size:11px;color:var(--text3);margin-top:5px}
+.adv-hint-box{background:var(--orange-lt);border:0.5px solid var(--orange);border-radius:var(--radius);padding:9px 11px;margin-bottom:13px}
+.adv-hint-box p{font-size:12px;color:var(--orange-dk);line-height:1.5}
+
+/* ── Amount input widget ─────────────────────────────────── */
+.amt-wrap{
+  width:100%;min-height:46px;
+  border:0.5px solid var(--border2);border-radius:var(--radius);
+  background:var(--surface);color:var(--text);
+  display:flex;align-items:center;padding:0 12px;
+  position:relative;cursor:text;
+}
+.amt-wrap:focus-within{outline:2px solid var(--green);outline-offset:-1px;background:var(--bg)}
+.amt-unit{font-size:14px;color:var(--text3);margin-right:4px;flex-shrink:0}
+.amt-disp{font-size:19px;font-weight:700;letter-spacing:-.5px;flex:1;color:var(--text)}
+.amt-disp.ph{color:var(--text3);font-weight:400;font-size:15px}
+.amt-input{position:absolute;inset:0;opacity:0;border:none;background:transparent;font-size:16px;width:100%;height:100%;cursor:text}
+
+/* ── Full-screen form (slide in from right) ──────────────── */
+.fsform{
+  position:fixed;inset:0;
+  background:var(--surface);z-index:var(--z-fullscreen);
+  display:flex;flex-direction:column;
+  transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  max-width:480px;left:50%;margin-left:-240px;
+}
+@media(max-width:480px){.fsform{left:0;margin-left:0}}
+.fsform.on{transform:translateX(0)}
+.fs-nav{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);border-bottom:0.5px solid var(--border);
+  padding:10px 14px;flex-shrink:0;
+  padding-top:calc(10px + var(--safe-t));
+}
+.fs-back{
+  width:34px;height:34px;border:none;background:transparent;
+  color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;flex-shrink:0;
+}
+.fs-back svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fs-title{font-size:17px;font-weight:600;flex:1}
+.fs-del{height:34px;padding:0 12px;background:transparent;color:var(--red);border:0.5px solid var(--red);border-radius:99px;cursor:pointer;font-size:14px}
+.fs-save{height:34px;padding:0 18px;background:var(--green);color:#fff;border:none;border-radius:99px;cursor:pointer;font-weight:600;font-size:14px}
+.fs-body{flex:1;overflow-y:auto;padding:18px 16px calc(24px + var(--safe-b));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+/* ── Cat tags ────────────────────────────────────────────── */
+.cat-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
+.cat-tag{display:flex;align-items:center;gap:4px;padding:5px 10px;border:0.5px solid var(--border2);border-radius:99px;font-size:13px;background:var(--surface);color:var(--text);cursor:pointer}
+.cat-del{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;cursor:pointer;flex-shrink:0}
+.cat-add-row{display:flex;gap:7px}
+.cat-add-row input{flex:1;height:38px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:0 10px;font-size:16px}
+.cat-add-row button{height:38px;padding:0 14px;border:none;border-radius:var(--radius);background:var(--green);color:#fff;cursor:pointer;font-size:14px}
+
+/* ── Toggles ─────────────────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-lbl{font-size:14px;color:var(--text)}
+.toggle-sub{font-size:11px;color:var(--text3);margin-top:2px}
+.toggle{position:relative;width:44px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:13px;transition:background .2s}
+.toggle input:checked~.toggle-track{background:var(--green)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
+.remind-info-box{background:var(--blue-lt);border:0.5px solid var(--blue);border-radius:var(--radius);padding:10px 12px;margin-bottom:12px}
+.remind-info-box p{font-size:12px;color:var(--blue-dk);line-height:1.55}
+
+/* ── Export row ──────────────────────────────────────────── */
+.export-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:10px}
+.export-btn{height:38px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text2);cursor:pointer;font-size:13px}
+
+/* ── Settings screen ─────────────────────────────────────── */
+.settings-group{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden}
+.settings-group-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:12px 14px 6px}
+.settings-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 14px;border-top:0.5px solid var(--border);cursor:pointer;
+}
+.settings-row:first-of-type{border-top:none}
+.settings-row:active{background:var(--surface)}
+.settings-row-lbl{font-size:15px;color:var(--text)}
+.settings-row-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.settings-row-right{display:flex;align-items:center;gap:6px;color:var(--text3)}
+.settings-row-right svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.settings-row-val{font-size:14px;color:var(--text2)}
+/* App info card at bottom of settings */
+.app-info-card{
+  background:var(--bg);border:0.5px solid var(--border);
+  border-radius:var(--radius-lg);padding:20px 14px;
+  text-align:center;margin-top:20px;
+}
+.app-info-icon{
+  width:60px;height:60px;background:var(--green);border-radius:16px;
+  margin:0 auto 12px;display:flex;align-items:center;justify-content:center;
+}
+.app-info-icon svg{width:30px;height:30px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.app-info-name{font-size:17px;font-weight:700;margin-bottom:4px}
+.app-info-version{font-size:13px;color:var(--text3);margin-bottom:14px}
+.app-info-rows{border-top:0.5px solid var(--border);padding-top:12px}
+.app-info-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px}
+.app-info-row span:first-child{color:var(--text3)}
+.app-info-row span:last-child{color:var(--text);font-weight:500}
+
+/* ── Toast (with optional undo action) ───────────────────── */
+.toast{
+  position:fixed;bottom:calc(68px + var(--safe-b) + 10px);
+  left:50%;transform:translateX(-50%) translateY(12px);
+  background:rgba(26,26,24,.92);color:#fff;font-size:14px;
+  padding:9px 14px;border-radius:99px;
+  opacity:0;transition:all .25s;pointer-events:none;
+  white-space:nowrap;z-index:var(--z-toast);max-width:92vw;
+  display:flex;align-items:center;gap:4px;
+}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 </style>
 </head>
 <body>
 <div id="app">
 
-<!-- ═══ HOME ═══ -->
+<!-- ═══════════════ HOME SCREEN ════════════════ -->
 <div id="s-home" class="screen on">
+  <!-- Month navigation -->
   <div class="top-bar">
     <button class="month-nav-btn" onclick="shiftM(-1)" aria-label="上個月">&#8249;</button>
     <select id="hy" class="flex1" onchange="rHome()" aria-label="年份"></select>
     <select id="hm" class="flex1" onchange="rHome()" aria-label="月份"></select>
     <button class="month-nav-btn" onclick="shiftM(1)" aria-label="下個月">&#8250;</button>
   </div>
+  <!-- UX1: 2 primary metrics only -->
   <div class="hero-strip">
     <div class="hero-card">
       <div class="hero-lbl">本月支出</div>
       <div class="hero-val r" id="h-tot">—</div>
+      <!-- hidden compat IDs consumed by rHome() JS -->
       <span id="h-paid" style="display:none">—</span>
       <span id="h-unpaid" style="display:none">—</span>
       <span id="h-adv" style="display:none">—</span>
@@ -386,11 +723,13 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <div class="hero-sub" id="h-remain-sub"></div>
     </div>
   </div>
+  <!-- Budget bar -->
   <div class="bud-bar">
     <span class="bud-bar-lbl">月預算</span>
     <div class="bud-bar-track"><div class="bud-bar-fill" id="h-bud-fill" style="width:0%"></div></div>
     <span class="bud-bar-pct" id="h-bud-pct">未設定</span>
   </div>
+  <!-- UX1: collapsible detail accordion -->
   <div class="detail-toggle" id="detail-toggle" onclick="toggleDetail()" role="button" aria-expanded="false" aria-controls="detail-panel">
     <span class="detail-toggle-lbl">詳細分類 ▸ 已繳 / 未繳 / 代墊</span>
     <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
@@ -400,6 +739,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
     <div class="detail-tile"><div class="detail-lbl">未繳</div><div class="detail-val r" id="h-unpaid-d">—</div></div>
     <div class="detail-tile"><div class="detail-lbl">代墊待收</div><div class="detail-val o" id="h-adv-d">—</div></div>
   </div>
+  <!-- Scrollable list -->
   <div class="scroll-body" id="home-scroll">
     <div id="reminder-wrap"></div>
     <div id="copy-wrap"></div>
@@ -407,14 +747,16 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   </div>
 </div>
 
-<!-- ═══ LIST ═══ -->
+<!-- ═══════════════ LIST SCREEN ════════════════ -->
 <div id="s-list" class="screen">
+  <!-- UX3: Search stays at absolute top, always visible -->
   <div class="search-wrap">
     <svg viewBox="0 0 20 20"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5L18 18"/></svg>
     <input class="search-input" id="search" type="search" placeholder="搜尋項目或備註…" aria-label="搜尋">
   </div>
+  <!-- UX3: date range + filters become sticky header -->
   <div class="list-sticky">
-    <div class="top-bar" style="border-top:1px solid var(--b1)">
+    <div class="top-bar" style="border-top:0.5px solid var(--border)">
       <select id="ly" class="flex1" onchange="syncRange()" aria-label="年份"></select>
       <select id="lm" class="flex1" onchange="syncRange()" aria-label="月份"></select>
     </div>
@@ -438,11 +780,11 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   <div class="scroll-body"><div id="list-items"></div></div>
 </div>
 
-<!-- ═══ CHART ═══ -->
+<!-- ═══════════════ CHART SCREEN ════════════════ -->
 <div id="s-chart" class="screen">
   <div class="top-bar">
-    <select id="cy2" class="flex1" onchange="rChart()" aria-label="年份"></select>
-    <select id="cm2" class="flex1" onchange="rChart()" aria-label="月份"></select>
+    <select id="cy2" class="flex1" onchange="rChart()"></select>
+    <select id="cm2" class="flex1" onchange="rChart()"></select>
   </div>
   <div class="scroll-body">
     <div class="bud-total-card">
@@ -472,7 +814,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   </div>
 </div>
 
-<!-- ═══ TREND ═══ -->
+<!-- ═══════════════ TREND SCREEN ════════════════ -->
 <div id="s-trend" class="screen">
   <div class="scroll-body">
     <div class="card">
@@ -485,43 +827,83 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   </div>
 </div>
 
-<!-- ═══ SETTINGS ═══ -->
+<!-- ═══════════════ SETTINGS SCREEN ════════════════ -->
 <div id="s-settings" class="screen">
-  <div class="top-bar"><div class="top-bar-title">設定</div></div>
+  <div class="top-bar">
+    <div class="top-bar-title">設定</div>
+  </div>
   <div class="scroll-body">
+
+    <!-- Group 1: Data Management -->
     <div class="settings-group-title">資料管理</div>
     <div class="settings-group">
       <div class="settings-row" onclick="exportJSON()">
-        <div><div class="settings-row-lbl">匯出 JSON 備份</div><div class="settings-row-sub">完整備份，可還原所有資料</div></div>
-        <div class="settings-row-right"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div>
+          <div class="settings-row-lbl">匯出 JSON 備份</div>
+          <div class="settings-row-sub">完整備份，可還原所有資料</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
       </div>
       <div class="settings-row" onclick="exportCSV()">
-        <div><div class="settings-row-lbl">匯出 CSV</div><div class="settings-row-sub">可用 Excel / Numbers 開啟分析</div></div>
-        <div class="settings-row-right"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+        <div>
+          <div class="settings-row-lbl">匯出 CSV</div>
+          <div class="settings-row-sub">可用 Excel / Numbers 開啟分析</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
       </div>
       <div class="settings-row" onclick="document.getElementById('imp').click()">
-        <div><div class="settings-row-lbl">匯入備份</div><div class="settings-row-sub">從 JSON 或 CSV 還原資料</div></div>
-        <div class="settings-row-right"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 14 12 9 17 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg></div>
+        <div>
+          <div class="settings-row-lbl">匯入備份</div>
+          <div class="settings-row-sub">從 JSON 或 CSV 還原資料</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 14 12 9 17 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+        </div>
       </div>
       <input type="file" id="imp" accept=".json,.csv" style="display:none" onchange="importFile(event)">
     </div>
+
+    <!-- Group 2: Preferences -->
     <div class="settings-group-title">偏好設定</div>
     <div class="settings-group">
       <div class="settings-row" onclick="openCatModal()">
-        <div><div class="settings-row-lbl">費用類別管理</div><div class="settings-row-sub" id="cat-preview-settings">—</div></div>
-        <div class="settings-row-right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div>
+          <div class="settings-row-lbl">費用類別管理</div>
+          <div class="settings-row-sub" id="cat-preview-settings">—</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
       <div class="settings-row" onclick="openBudModal()">
-        <div><div class="settings-row-lbl">預算設定</div><div class="settings-row-sub" id="bud-preview-settings">點此設定每月預算上限</div></div>
-        <div class="settings-row-right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div>
+          <div class="settings-row-lbl">預算設定</div>
+          <div class="settings-row-sub" id="bud-preview-settings">點此設定每月預算上限</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
       <div class="settings-row" onclick="openRemindModal()">
-        <div><div class="settings-row-lbl">到期提醒設定</div><div class="settings-row-sub" id="remind-preview-settings">—</div></div>
-        <div class="settings-row-right"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
+        <div>
+          <div class="settings-row-lbl">到期提醒設定</div>
+          <div class="settings-row-sub" id="remind-preview-settings">—</div>
+        </div>
+        <div class="settings-row-right">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
       </div>
     </div>
+
+    <!-- App Info -->
     <div class="app-info-card">
-      <div class="app-info-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="app-info-icon">
+        <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
       <div class="app-info-name">費用管理</div>
       <div class="app-info-version">個人記帳 PWA</div>
       <div class="app-info-rows">
@@ -530,10 +912,11 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
         <div class="app-info-row"><span>開發者</span><span>Henry</span></div>
       </div>
     </div>
+
   </div>
 </div>
 
-<!-- ═══ TAB BAR ═══ -->
+<!-- ═══════════════ TAB BAR ════════════════ -->
 <div class="tabs" role="tablist" aria-label="主要導覽">
   <button class="tab on" id="tab-home" role="tab" aria-selected="true" aria-controls="s-home" onclick="showS('home')">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1z"/><path d="M9 21V12h6v9"/></svg>
@@ -554,20 +937,25 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 </div>
 </div><!-- #app -->
 
+<!-- ═══════════════ FAB ════════════════ -->
 <button class="fab on" id="fab" onclick="openForm()" aria-label="新增費用">
   <svg viewBox="0 0 22 22"><path d="M11 3v16M3 11h16"/></svg>
 </button>
 
-<!-- ═══ FULL-SCREEN FORM ═══ -->
+<!-- ═══════════════ FULL-SCREEN FORM ════════════════ -->
 <div id="fsform" class="fsform" role="dialog" aria-modal="true" aria-labelledby="fs-title">
   <div class="fs-nav">
-    <button class="fs-back" onclick="closeForm()" aria-label="返回"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+    <button class="fs-back" onclick="closeForm()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
     <div class="fs-title" id="fs-title">新增費用項目</div>
     <button class="fs-del" id="fs-del" style="display:none" onclick="confirmDel()">刪除</button>
     <button class="fs-save" onclick="saveItem()">儲存</button>
   </div>
   <div class="fs-body">
-    <div class="field"><label>費用類型</label>
+    <!-- ── Essential fields (always visible) ── -->
+    <div class="field">
+      <label>費用類型</label>
       <div class="radio-row">
         <label class="radio-opt"><input type="radio" name="itype" id="rt-normal" value="normal" onchange="onTypeChange()"> 一般費用</label>
         <label class="radio-opt"><input type="radio" name="itype" id="rt-advance" value="advance" onchange="onTypeChange()"> 代墊款</label>
@@ -576,21 +964,28 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
     <div class="adv-hint-box" id="adv-hint" style="display:none"><p>代墊款：先代替他人支付，待對方償還。不計入個人支出，以橘色獨立追蹤。</p></div>
     <div class="field"><label>類別</label><select id="f-cat" aria-label="費用類別"></select></div>
     <div class="field"><label>項目名稱</label><input id="f-name" type="text" placeholder="例：中國信託信用卡費" autocomplete="off" aria-label="項目名稱"></div>
-    <div class="field" id="f-payee-wrap" style="display:none"><label>代墊對象</label><input id="f-payee" type="text" placeholder="例：小明" autocomplete="off"></div>
-    <div class="field"><label>金額（元）</label>
-      <div class="amt-wrap" onclick="document.getElementById('f-amt-r').focus()" role="group" aria-label="金額">
+    <div class="field" id="f-payee-wrap" style="display:none">
+      <label>代墊對象</label><input id="f-payee" type="text" placeholder="例：小明" autocomplete="off" aria-label="代墊對象">
+    </div>
+    <div class="field">
+      <label>金額（元）</label>
+      <div class="amt-wrap" onclick="document.getElementById('f-amt-r').focus()" role="group" aria-label="金額輸入">
         <span class="amt-unit">$</span>
         <span class="amt-disp ph" id="f-amt-d" aria-hidden="true">0</span>
         <input class="amt-input" id="f-amt-r" type="number" inputmode="numeric" min="0" step="1" oninput="syncAmt('f-amt-r','f-amt-d')" onfocus="this.select()" aria-label="金額">
       </div>
     </div>
     <div class="field"><label>繳費 / 到期日</label><input id="f-date" type="date" aria-label="日期"></div>
+
+    <!-- UX7: Advanced toggle — hidden by default -->
     <button class="adv-toggle" id="adv-toggle" type="button" onclick="toggleAdvFields()" aria-expanded="false" aria-controls="adv-fields">
-      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>更多選項（提醒 / 備註 / 狀態）
+      <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      更多選項（提醒 / 備註 / 狀態）
     </button>
     <div class="adv-fields" id="adv-fields" role="region">
-      <div style="height:1px;background:var(--b1);margin:0 0 12px"></div>
-      <div class="field"><label>到期提醒</label>
+      <div class="adv-fields fdivider" style="height:0.5px;background:var(--border);margin:0 0 12px"></div>
+      <div class="field">
+        <label>到期提醒</label>
         <div class="radio-row">
           <label class="radio-opt"><input type="radio" name="remind" id="rd-off" value="0"> 不提醒</label>
           <label class="radio-opt"><input type="radio" name="remind" id="rd-3" value="3"> 提前 3 天</label>
@@ -599,13 +994,15 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       </div>
       <div class="field"><label>備註（選填）</label><textarea id="f-note" placeholder="例：含年費、自動扣款…" aria-label="備註"></textarea></div>
       <div class="fdivider"></div>
-      <div class="field" id="f-status-wrap"><label>繳納狀態</label>
+      <div class="field" id="f-status-wrap">
+        <label>繳納狀態</label>
         <div class="radio-row">
           <label class="radio-opt"><input type="radio" name="paid" id="r-unpaid" value="0"> 尚未繳納</label>
           <label class="radio-opt"><input type="radio" name="paid" id="r-paid" value="1"> 已繳納</label>
         </div>
       </div>
-      <div class="field" id="f-recovered-wrap" style="display:none"><label>收回狀態</label>
+      <div class="field" id="f-recovered-wrap" style="display:none">
+        <label>收回狀態</label>
         <div class="radio-row">
           <label class="radio-opt"><input type="radio" name="recovered" id="r-unrec" value="0"> 尚未收回</label>
           <label class="radio-opt"><input type="radio" name="recovered" id="r-rec" value="1"> 已收回</label>
@@ -615,19 +1012,23 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   </div>
 </div>
 
-<!-- Modals -->
+<!-- ═══════════════ MODALS ════════════════ -->
+<!-- Budget -->
 <div class="overlay" id="bov" role="dialog" aria-modal="true" aria-labelledby="bov-title" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-handle"></div><h3 id="bov-title">設定預算</h3>
-    <div class="field"><label>每月總支出上限</label>
+    <div class="sheet-handle"></div>
+    <h3 id="bov-title">設定預算</h3>
+    <div class="field">
+      <label>每月總支出上限</label>
       <div class="amt-wrap" onclick="document.getElementById('bt-r').focus()">
-        <span class="amt-unit">$</span><span class="amt-disp ph" id="bt-d">0</span>
+        <span class="amt-unit">$</span>
+        <span class="amt-disp ph" id="bt-d">0</span>
         <input class="amt-input" id="bt-r" type="number" inputmode="numeric" min="0" step="1" oninput="syncAmt('bt-r','bt-d')" onfocus="this.select()">
       </div>
       <p class="field-note">設為 0 表示不設定總預算上限</p>
     </div>
     <div class="fdivider"></div>
-    <p style="font-size:12px;color:var(--t4);margin-bottom:10px">各分類預算（元）</p>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">各分類預算（元）</p>
     <div id="b-fields"></div>
     <div class="sheet-btns">
       <button class="btn" onclick="document.getElementById('bov').classList.remove('on')">關閉</button>
@@ -635,97 +1036,174 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
     </div>
   </div>
 </div>
+
+<!-- Categories -->
 <div class="overlay" id="cov" role="dialog" aria-modal="true" aria-labelledby="cov-title" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-handle"></div><h3 id="cov-title">管理費用類別</h3>
+    <div class="sheet-handle"></div>
+    <h3 id="cov-title">管理費用類別</h3>
     <div class="cat-grid" id="cat-tags"></div>
-    <div class="cat-add-row"><input id="new-cat" type="text" placeholder="新增類別名稱" maxlength="10"><button onclick="addCat()">新增</button></div>
+    <div class="cat-add-row">
+      <input id="new-cat" type="text" placeholder="新增類別名稱" maxlength="10">
+      <button onclick="addCat()">新增</button>
+    </div>
     <div class="sheet-btns" style="margin-top:14px">
       <button class="btn primary" onclick="document.getElementById('cov').classList.remove('on');refreshCatSel();rTrend();rSettings()">完成</button>
     </div>
   </div>
 </div>
+
+<!-- Reminders -->
 <div class="overlay" id="rsov" role="dialog" aria-modal="true" aria-labelledby="rsov-title" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet" onclick="event.stopPropagation()">
-    <div class="sheet-handle"></div><h3 id="rsov-title">提醒設定</h3>
+    <div class="sheet-handle"></div>
+    <h3 id="rsov-title">提醒設定</h3>
     <div class="remind-info-box"><p>開啟 App 時自動掃描到期費用，於首頁顯示提醒卡片。不需要系統通知權限。</p></div>
     <div id="remind-settings-rows"></div>
-    <div class="sheet-btns" style="margin-top:14px"><button class="btn primary" onclick="saveRemindSettings()">儲存</button></div>
+    <div class="sheet-btns" style="margin-top:14px">
+      <button class="btn primary" onclick="saveRemindSettings()">儲存</button>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
-  integrity="sha384-ynbcyRnmKOXRJxFuTHKfLBKHbNQZVOiCiKJTi7T9/5bPXJdFH1lIjJE1pLhCyS"
-  crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 'use strict';
-const NF=new Intl.NumberFormat('zh-TW',{maximumFractionDigits:0});
-const fmt=n=>'$'+NF.format(Math.round(n||0));
-const fmtN=n=>NF.format(Math.round(n||0));
-function syncAmt(rId,dId){const v=parseInt(document.getElementById(rId).value)||0;const d=document.getElementById(dId);if(!d)return;if(v>0){d.textContent=fmtN(v);d.classList.remove('ph');}else{d.textContent='0';d.classList.add('ph');}}
-function getAmt(rId){return parseInt(document.getElementById(rId).value)||0;}
-function setAmt(rId,dId,val){const v=Math.round(val)||0;document.getElementById(rId).value=v||'';const d=document.getElementById(dId);if(!d)return;if(v>0){d.textContent=fmtN(v);d.classList.remove('ph');}else{d.textContent='0';d.classList.add('ph');}}
-const esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
+// ── Security & Formatting ────────────────────────────────
+// 新增 XSS 防護函式，過濾使用者輸入的特殊字元
+const esc = str => String(str).replace(/[&<>"']/g, m => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[m]));
+
+const NF  = new Intl.NumberFormat('zh-TW', {maximumFractionDigits:0});
+const fmt  = n => '$' + NF.format(Math.round(n||0));
+const fmtN = n => NF.format(Math.round(n||0));
+
+function syncAmt(rId, dId){
+  const v = parseInt(document.getElementById(rId).value)||0;
+  const d = document.getElementById(dId); if(!d)return;
+  if(v>0){d.textContent=fmtN(v);d.classList.remove('ph');}
+  else{d.textContent='0';d.classList.add('ph');}
+}
+function getAmt(rId){return parseInt(document.getElementById(rId).value)||0;}
+function setAmt(rId, dId, val){
+  const v=Math.round(val)||0;
+  document.getElementById(rId).value=v||'';
+  const d=document.getElementById(dId); if(!d)return;
+  if(v>0){d.textContent=fmtN(v);d.classList.remove('ph');}
+  else{d.textContent='0';d.classList.add('ph');}
+}
+
+// ── Constants ────────────────────────────────────────────
 const DEFAULT_CATS=['信用卡','保險','訂閱','水電瓦斯','房租/房貸','電話/網路','醫療','交通','餐飲','其他'];
-const PIE_COLORS=['#0F766E','#2563EB','#EA580C','#7C3AED','#D97706','#DB2777','#16A34A','#475569','#0891B2','#9333EA','#0F766E','#E11D48'];
-const YR_PAL=[{line:'#0F766E',fill:'rgba(15,118,110,.1)'},{line:'#2563EB',fill:'rgba(37,99,235,.1)'},{line:'#EA580C',fill:'rgba(234,88,12,.1)'},{line:'#7C3AED',fill:'rgba(124,58,237,.1)'},{line:'#D97706',fill:'rgba(217,119,6,.1)'}];
+const PIE_COLORS=['#1D9E75','#378ADD','#D85A30','#7F77DD','#BA7517','#D4537E','#639922','#5F5E5A','#0F6E56','#A32D2D','#185FA5','#E24B4A'];
+const YR_PAL=[
+  {line:'#1D9E75',fill:'rgba(29,158,117,.12)'},
+  {line:'#378ADD',fill:'rgba(55,138,221,.12)'},
+  {line:'#D85A30',fill:'rgba(216,90,48,.12)'},
+  {line:'#7F77DD',fill:'rgba(127,119,221,.12)'},
+  {line:'#BA7517',fill:'rgba(186,117,23,.12)'},
+];
 const DEF_REM={enabled:true,showOverdue:true,showDueSoon:true,dueSoonDays:3,showAdvanceUnrec:true};
 
-let DB,editId=null,pieChart=null,areaChart=null,listFilter='all',_savedScroll=0;
+// ── State ────────────────────────────────────────────────
+let DB, editId=null, pieChart=null, areaChart=null, listFilter='all', _savedScroll=0;
 let dirty={home:true,list:true,chart:true,trend:true};
 let budStore=JSON.parse(localStorage.getItem('ep_bud_v2')||'{"byIdx":{},"total":0}');
 let userCats=JSON.parse(localStorage.getItem('ep_cats')||'null');
 let selYears=JSON.parse(localStorage.getItem('ep_sel_yrs')||'null');
 let remCfg=JSON.parse(localStorage.getItem('ep_rem_cfg')||'null')||{...DEF_REM};
 let remDismissed=localStorage.getItem('ep_rem_dis')||'';
-let isComposing=false;
 if(!userCats){userCats=[...DEFAULT_CATS];saveCats();}
+
 function getCats(){return userCats;}
 function saveCats(){localStorage.setItem('ep_cats',JSON.stringify(userCats));}
 function saveSelYrs(){localStorage.setItem('ep_sel_yrs',JSON.stringify(selYears));}
 function saveBudStore(){localStorage.setItem('ep_bud_v2',JSON.stringify(budStore));}
 function saveRemCfg(){localStorage.setItem('ep_rem_cfg',JSON.stringify(remCfg));}
 
-const pad=n=>n<10?'0'+n:''+n;
+// ── Helpers ──────────────────────────────────────────────
+const pad=(n)=>n<10?'0'+n:''+n;
 const ymStr=(y,m)=>`${y}-${pad(m)}`;
 const cy=()=>new Date().getFullYear();
 const cm=()=>new Date().getMonth()+1;
 const today=()=>new Date().toISOString().slice(0,10);
 function addDays(ds,n){const d=new Date(ds);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);}
 function diffDays(ds){return Math.round((new Date(ds)-new Date(today()))/86400000);}
-
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2300);}
-let _undoTimer=null;
-function toastUndo(msg,undoFn){
+function toast(msg){
   const t=document.getElementById('toast');
-  t.innerHTML=`${esc(msg)} <button onclick="doUndo()" style="margin-left:8px;background:rgba(255,255,255,.2);border:none;color:inherit;padding:2px 10px;border-radius:99px;cursor:pointer;font-size:13px;font-family:inherit">復原</button>`;
-  t._undoFn=undoFn;t.classList.add('on');
-  clearTimeout(_undoTimer);_undoTimer=setTimeout(()=>{t.classList.remove('on');t._undoFn=null;},4000);
+  t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2300);
 }
-function doUndo(){const t=document.getElementById('toast');if(t._undoFn){clearTimeout(_undoTimer);t._undoFn();t._undoFn=null;}t.classList.remove('on');}
 
-// ── IndexedDB ──
+// UX5: Undo-toast — shows message + tappable Undo action for 4 seconds
+let _undoTimer=null;
+function toastUndo(msg, undoFn){
+  const t=document.getElementById('toast');
+  t.innerHTML=`${esc(msg)} <button onclick="doUndo()" style="margin-left:10px;background:rgba(255,255,255,.22);border:none;color:#fff;padding:2px 10px;border-radius:99px;cursor:pointer;font-size:13px">復原</button>`;
+  t._undoFn=undoFn;
+  t.classList.add('on');
+  clearTimeout(_undoTimer);
+  _undoTimer=setTimeout(()=>{t.classList.remove('on');t._undoFn=null;},4000);
+}
+function doUndo(){
+  const t=document.getElementById('toast');
+  if(t._undoFn){clearTimeout(_undoTimer);t._undoFn();t._undoFn=null;}
+  t.classList.remove('on');
+}
+
+// UX1: toggle collapsible detail panel on home screen
+function toggleDetail(){
+  const panel=document.getElementById('detail-panel');
+  const toggle=document.getElementById('detail-toggle');
+  const open=panel.classList.toggle('open');
+  toggle.classList.toggle('open',open);
+  toggle.setAttribute('aria-expanded',open);
+}
+
+// UX7: toggle advanced fields in add/edit form
+function toggleAdvFields(){
+  const fields=document.getElementById('adv-fields');
+  const btn=document.getElementById('adv-toggle');
+  const open=fields.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open);
+}
+
+// ── IndexedDB (Optimized Layers) ─────────────────────────
 function openDB(){
   return new Promise((res,rej)=>{
     const r=indexedDB.open('expense_v8',1);
-    r.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains('items')){db.createObjectStore('items',{keyPath:'id',autoIncrement:true}).createIndex('ym','ym');}};
-    r.onsuccess=e=>{DB=e.target.result;res();};r.onerror=()=>rej(r.error);
+    r.onupgradeneeded=e=>{
+      const db=e.target.result;
+      if(!db.objectStoreNames.contains('items'))
+        db.createObjectStore('items',{keyPath:'id',autoIncrement:true}).createIndex('ym','ym');
+    };
+    r.onsuccess=e=>{DB=e.target.result;res();};
+    r.onerror=()=>rej(r.error);
   });
 }
 const store=m=>DB.transaction('items',m).objectStore('items');
 const getAll=()=>new Promise(res=>{store('readonly').getAll().onsuccess=e=>res(e.target.result||[]);});
-const getByYM=ym=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.only(ym)).onsuccess=e=>res(e.target.result||[]);});
+
+// 新增：利用 Index 進行 O(1) 範圍查詢，避免每次都撈出全部資料過濾
+const getByYM=(ym)=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.only(ym)).onsuccess=e=>res(e.target.result||[]);});
 const getByRange=(from,to)=>new Promise(res=>{store('readonly').index('ym').getAll(IDBKeyRange.bound(from,to)).onsuccess=e=>res(e.target.result||[]);});
-// Fix 1: getById — primary-key O(log n) lookup; prevents ReferenceError in delegation
+// Fix 1: getById — primary-key lookup, O(log n), used by event delegation
+// for delete and checkbox toggle (avoids full table scan with getAll().find())
 const getById=id=>new Promise(res=>{store('readonly').get(id).onsuccess=e=>res(e.target.result||null);});
-const putItem=item=>new Promise(res=>{const r=store('readwrite').put(item);r.onsuccess=e=>{if(!item.id)item.id=e.target.result;res(item);};});
+
+const putItem=item=>new Promise(res=>{
+  const r=store('readwrite').put(item);
+  r.onsuccess=e=>{if(!item.id)item.id=e.target.result;res(item);};
+});
 const delItem=id=>new Promise(res=>{store('readwrite').delete(id).onsuccess=res;});
 
-// ── Selects ──
+// ── Selects ──────────────────────────────────────────────
 function buildSelects(){
-  const nowY=cy(),nowM=cm(),yrs=Array.from({length:21},(_,i)=>2026+i),ms=Array.from({length:12},(_,i)=>i+1);
+  const nowY=cy(),nowM=cm();
+  const yrs=Array.from({length:21},(_,i)=>2026+i);
+  const ms=Array.from({length:12},(_,i)=>i+1);
   const yO=yrs.map(yr=>`<option value="${yr}"${yr===nowY?' selected':''}>${yr}年</option>`).join('');
   const mO=ms.map(mn=>`<option value="${mn}"${mn===nowM?' selected':''}>${mn}月</option>`).join('');
   ['hy','ly','cy2'].forEach(id=>{const s=document.getElementById(id);if(s)s.innerHTML=yO;});
@@ -737,379 +1215,894 @@ function buildSelects(){
   ['rf-m','rt-m'].forEach(id=>{const s=document.getElementById(id);if(s){s.innerHTML=mO;s.value=nowM;}});
 }
 const curYM=()=>({y:+document.getElementById('hy').value,m:+document.getElementById('hm').value});
-function shiftM(d){const sy=document.getElementById('hy'),sm=document.getElementById('hm');let y=+sy.value,m=+sm.value+d;if(m>12){m=1;y++;}if(m<1){m=12;y--;}y=Math.max(2026,Math.min(2046,y));sy.value=y;sm.value=m;dirtyAll();rHome();}
-function syncRange(){document.getElementById('rf-y').value=document.getElementById('ly').value;document.getElementById('rf-m').value=document.getElementById('lm').value;document.getElementById('rt-y').value=document.getElementById('ly').value;document.getElementById('rt-m').value=document.getElementById('lm').value;rList();}
+function shiftM(d){
+  const sy=document.getElementById('hy'),sm=document.getElementById('hm');
+  let y=+sy.value,m=+sm.value+d;
+  if(m>12){m=1;y++;}if(m<1){m=12;y--;}
+  y=Math.max(2026,Math.min(2046,y));
+  sy.value=y;sm.value=m;dirtyAll();rHome();
+}
+function syncRange(){
+  document.getElementById('rf-y').value=document.getElementById('ly').value;
+  document.getElementById('rf-m').value=document.getElementById('lm').value;
+  document.getElementById('rt-y').value=document.getElementById('ly').value;
+  document.getElementById('rt-m').value=document.getElementById('lm').value;
+  rList();
+}
 const dirtyAll=()=>Object.keys(dirty).forEach(k=>dirty[k]=true);
-function refreshCatSel(){const cats=getCats(),sel=document.getElementById('f-cat'),cur=sel.value;sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');if(cats.includes(cur))sel.value=cur;}
-function onTypeChange(){const a=document.getElementById('rt-advance').checked;document.getElementById('adv-hint').style.display=a?'block':'none';document.getElementById('f-payee-wrap').style.display=a?'block':'none';document.getElementById('f-status-wrap').style.display=a?'none':'block';document.getElementById('f-recovered-wrap').style.display=a?'block':'none';}
-function getRangeYM(){const fy=+document.getElementById('rf-y').value,fm=+document.getElementById('rf-m').value,ty=+document.getElementById('rt-y').value,tm=+document.getElementById('rt-m').value;const f=ymStr(fy,fm),t=ymStr(ty,tm);return f<=t?{from:f,to:t}:{from:t,to:f};}
 
-// ── Reminders ──
+function refreshCatSel(){
+  const cats=getCats(),sel=document.getElementById('f-cat'),cur=sel.value;
+  sel.innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(cats.includes(cur))sel.value=cur;
+}
+function onTypeChange(){
+  const a=document.getElementById('rt-advance').checked;
+  document.getElementById('adv-hint').style.display=a?'block':'none';
+  document.getElementById('f-payee-wrap').style.display=a?'block':'none';
+  document.getElementById('f-status-wrap').style.display=a?'none':'block';
+  document.getElementById('f-recovered-wrap').style.display=a?'block':'none';
+}
+
+// ── Range YM ─────────────────────────────────────────────
+function getRangeYM(){
+  const fy=+document.getElementById('rf-y').value,fm=+document.getElementById('rf-m').value;
+  const ty=+document.getElementById('rt-y').value,tm=+document.getElementById('rt-m').value;
+  const f=ymStr(fy,fm),t=ymStr(ty,tm);
+  return f<=t?{from:f,to:t}:{from:t,to:f};
+}
+
+// ── Reminders ────────────────────────────────────────────
 async function buildRems(){
   if(!remCfg.enabled)return[];
+  // 提醒功能涉及跨月份逾期，仍需 getAll()
   const all=await getAll(),td=today(),thr=addDays(td,remCfg.dueSoonDays);
   const rems=[];
   all.forEach(x=>{
-    if(remCfg.showOverdue&&x.itype!=='advance'&&x.paid!==1&&x.date&&x.date<td)rems.push({item:x,type:'overdue',diff:diffDays(x.date)});
-    else if(remCfg.showDueSoon&&x.itype!=='advance'&&x.paid!==1&&x.date&&x.date>=td&&x.date<=thr)rems.push({item:x,type:'due-soon',diff:diffDays(x.date)});
-    if(remCfg.showAdvanceUnrec&&x.itype==='advance'&&x.recovered!==1)rems.push({item:x,type:'advance',diff:x.date?diffDays(x.date):null});
+    if(remCfg.showOverdue&&x.itype!=='advance'&&x.paid!==1&&x.date&&x.date<td)
+      rems.push({item:x,type:'overdue',diff:diffDays(x.date)});
+    else if(remCfg.showDueSoon&&x.itype!=='advance'&&x.paid!==1&&x.date&&x.date>=td&&x.date<=thr)
+      rems.push({item:x,type:'due-soon',diff:diffDays(x.date)});
+    if(remCfg.showAdvanceUnrec&&x.itype==='advance'&&x.recovered!==1)
+      rems.push({item:x,type:'advance',diff:x.date?diffDays(x.date):null});
   });
   rems.sort((a,b)=>{const o={overdue:0,'due-soon':1,advance:2};return o[a.type]!==o[b.type]?o[a.type]-o[b.type]:(a.diff!==null&&b.diff!==null?a.diff-b.diff:0);});
   return rems;
 }
+
 function renderRems(rems,max){
-  max=max||5;const wrap=document.getElementById('reminder-wrap'),badge=document.getElementById('remind-badge');
-  const n=rems.length;if(n>0){badge.textContent=n>9?'9+':n;badge.style.display='';}else badge.style.display='none';
+  max=max||5;
+  const wrap=document.getElementById('reminder-wrap');
+  const badge=document.getElementById('remind-badge');
+  const n=rems.length;
+  if(n>0){badge.textContent=n>9?'9+':n;badge.style.display='';}else badge.style.display='none';
   if(!n||!remCfg.enabled||remDismissed===today()){wrap.innerHTML='';return;}
+  
   const sec=document.createElement('div');sec.className='rem-box';
   const hdr=document.createElement('div');hdr.className='rem-hdr';
   const htl=document.createElement('div');htl.className='rem-hdr-lbl';
   htl.innerHTML=`<svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>待處理提醒（${n}）`;
+  
   const dis=document.createElement('button');dis.className='rem-dismiss';dis.textContent='今日不顯示';
   dis.onclick=()=>{remDismissed=today();localStorage.setItem('ep_rem_dis',remDismissed);wrap.innerHTML='';badge.style.display='none';};
   hdr.append(htl,dis);sec.appendChild(hdr);
+  
+  const frag = document.createDocumentFragment();
   rems.slice(0,max).forEach(r=>{
-    const row=document.createElement('div');row.className=`rem-row ${r.type}`;row.onclick=()=>openForm(r.item.id);
+    const row=document.createElement('div');row.className=`rem-row ${r.type}`;
+    row.onclick=()=>openForm(r.item.id);
     let ic,sv,meta,ac;
     if(r.type==='overdue'){ic='r';sv='<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><path d="M12 9v4M12 17h.01"/>';meta=`逾期 ${Math.abs(r.diff)} 天 · ${r.item.cat}`;ac='r';}
     else if(r.type==='due-soon'){ic='a';sv='<circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>';meta=r.diff===0?`今天到期 · ${r.item.cat}`:`${r.diff} 天後到期 · ${r.item.date}`;ac='a';}
     else{ic='o';sv='<circle cx="12" cy="12" r="10"/><path d="M16 8l-4 4-4-4"/><path d="M12 12v5"/>';meta=`${r.item.payee?'代墊：'+r.item.payee:'代墊未收回'} · ${r.item.ym}`;ac='o';}
+    // 加入 XSS esc() 防護
     row.innerHTML=`<div class="rem-ico ${ic}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${sv}</svg></div><div class="rem-body"><div class="rem-name">${esc(r.item.name)}</div><div class="rem-meta">${esc(meta)}</div></div><div class="rem-amt ${ac}">${fmt(r.item.amount)}</div>`;
-    sec.appendChild(row);
+    frag.appendChild(row);
   });
-  if(n>max){const m=document.createElement('div');m.style.cssText='text-align:center;font-size:12px;color:var(--t4);padding:4px 0';m.textContent=`還有 ${n-max} 筆…`;sec.appendChild(m);}
+  
+  if(n>max){
+    const m=document.createElement('div');
+    m.style.cssText='text-align:center;font-size:12px;color:var(--text3);padding:4px 0';
+    m.textContent=`還有 ${n-max} 筆…`;
+    frag.appendChild(m);
+  }
+  sec.appendChild(frag);
   wrap.innerHTML='';wrap.appendChild(sec);
 }
 
-// ── HOME ──
+// ── HOME ─────────────────────────────────────────────────
 async function rHome(){
   dirty.home=false;
   const{y,m}=curYM(),key=ymStr(y,m);
-  const items=await getByYM(key);
-  const normal=items.filter(x=>x.itype!=='advance'),advance=items.filter(x=>x.itype==='advance');
-  const total=normal.reduce((s,x)=>s+x.amount,0),paid=normal.filter(x=>x.paid===1).reduce((s,x)=>s+x.amount,0);
+  const items = await getByYM(key);
+  const normal=items.filter(x=>x.itype!=='advance');
+  const advance=items.filter(x=>x.itype==='advance');
+  const total=normal.reduce((s,x)=>s+x.amount,0);
+  const paid=normal.filter(x=>x.paid===1).reduce((s,x)=>s+x.amount,0);
+  const unpaid=total-paid;
   const advUnrec=advance.filter(x=>x.recovered!==1).reduce((s,x)=>s+x.amount,0);
+
+  // UX1: primary 2-metric hero
   document.getElementById('h-tot').textContent=fmt(total);
+  // hidden compat spans (other code reads these)
   document.getElementById('h-paid').textContent=fmt(paid);
-  document.getElementById('h-unpaid').textContent=fmt(total-paid);
+  document.getElementById('h-unpaid').textContent=fmt(unpaid);
   document.getElementById('h-adv').textContent=fmt(advUnrec);
+  // collapsible detail panel
   document.getElementById('h-paid-d').textContent=fmt(paid);
-  document.getElementById('h-unpaid-d').textContent=fmt(total-paid);
+  document.getElementById('h-unpaid-d').textContent=fmt(unpaid);
   document.getElementById('h-adv-d').textContent=fmt(advUnrec);
-  const bTotal=budStore.total||0,remain=bTotal>0?bTotal-total:null;
-  const remEl=document.getElementById('h-remain'),remSub=document.getElementById('h-remain-sub');
-  if(bTotal>0){remEl.textContent=fmt(Math.max(remain,0));remEl.className='hero-val'+(remain<0?' r':' g');remSub.textContent=`預算 ${fmt(bTotal)}`;}
-  else{remEl.textContent='未設定';remEl.className='hero-val';remSub.textContent='點設定頁面設定預算';}
-  const pct=bTotal>0?Math.min(Math.round(total/bTotal*100),100):0,fill=document.getElementById('h-bud-fill'),pctLbl=document.getElementById('h-bud-pct');
-  if(bTotal>0){fill.style.width=pct+'%';fill.className='bud-bar-fill'+(pct>=100?' over':pct>=80?' warn':'');pctLbl.textContent=pct+'%';}
-  else{fill.style.width='0%';fill.className='bud-bar-fill';pctLbl.textContent='未設定';}
+  // remaining budget hero
+  const bTotal=budStore.total||0;
+  const remain=bTotal>0?bTotal-total:null;
+  const remEl=document.getElementById('h-remain');
+  const remSub=document.getElementById('h-remain-sub');
+  if(bTotal>0){
+    remEl.textContent=fmt(Math.max(remain,0));
+    remEl.className='hero-val'+(remain<0?' r':remain<bTotal*.2?' '+(remain>=0?'':'r'):' g');
+    remSub.textContent=`預算 ${fmt(bTotal)}`;
+  }else{
+    remEl.textContent='未設定';remEl.className='hero-val';remSub.textContent='點設定頁面設定預算';
+  }
+
+  // Budget bar
+  const pct=bTotal>0?Math.min(Math.round(total/bTotal*100),100):0;
+  const fill=document.getElementById('h-bud-fill');
+  const pctLbl=document.getElementById('h-bud-pct');
+  if(bTotal>0){
+    fill.style.width=pct+'%';
+    fill.className='bud-bar-fill'+(pct>=100?' over':pct>=80?' warn':'');
+    pctLbl.textContent=pct+'%';
+  }else{fill.style.width='0%';fill.className='bud-bar-fill';pctLbl.textContent='未設定';}
+
   const rems=await buildRems();renderRems(rems,3);
-  const prevM=m===1?12:m-1,prevY=m===1?y-1:y,prevItems=await getByYM(ymStr(prevY,prevM));
-  document.getElementById('copy-wrap').innerHTML=(!items.length&&prevItems.length)?`<div class="copy-banner" onclick="copyPrev()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><p>複製上月 <strong>${prevItems.length} 筆</strong>到本月？</p><span>複製</span></div>`:'';
+
+  const prevM=m===1?12:m-1,prevY=m===1?y-1:y;
+  const prevItems=await getByYM(ymStr(prevY,prevM));
+  document.getElementById('copy-wrap').innerHTML=(!items.length&&prevItems.length)
+    ?`<div class="copy-banner" onclick="copyPrev()"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><p>複製上月 <strong>${prevItems.length} 筆</strong>到本月？</p><span>複製</span></div>`:'';
+
   const el=document.getElementById('home-list');
   if(!items.length){
-    el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 100 100" fill="none"><rect x="15" y="25" width="70" height="55" rx="9" fill="var(--rs)"/><rect x="15" y="25" width="70" height="17" rx="9" fill="var(--b2)"/><rect x="25" y="52" width="28" height="5" rx="2.5" fill="var(--P)" opacity=".5"/><rect x="25" y="63" width="44" height="5" rx="2.5" fill="var(--b2)"/><circle cx="78" cy="78" r="16" fill="var(--P)"/><path d="M78 72v12M72 78h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><h3>本月尚無費用項目</h3><p>點下方 + 新增第一筆費用<br>開始追蹤每月支出</p><button class="empty-cta" onclick="openForm()">新增費用項目</button>${prevItems.length?`<button class="empty-cta-sec" onclick="copyPrev()">複製上月 ${prevItems.length} 筆</button>`:''}</div>`;
+    // UX6: actionable empty state — both primary CTA and copy shortcut
+    el.innerHTML=`<div class="empty-state">
+      <svg viewBox="0 0 100 100" fill="none">
+        <rect x="15" y="25" width="70" height="55" rx="9" fill="var(--surface2)"/>
+        <rect x="15" y="25" width="70" height="17" rx="9" fill="var(--border2)"/>
+        <rect x="25" y="52" width="28" height="5" rx="2.5" fill="var(--green)" opacity=".5"/>
+        <rect x="25" y="63" width="44" height="5" rx="2.5" fill="var(--border2)"/>
+        <circle cx="78" cy="78" r="16" fill="var(--green)"/>
+        <path d="M78 72v12M72 78h12" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+      <h3>本月尚無費用項目</h3>
+      <p>點下方 + 新增第一筆費用<br>開始追蹤每月支出</p>
+      <button class="empty-cta" onclick="openForm()">新增費用項目</button>
+      ${prevItems.length?`<button class="empty-cta-sec" onclick="copyPrev()">複製上月 ${prevItems.length} 筆</button>`:''}
+    </div>`;
     return;
   }
-  el.innerHTML='';const frag=document.createDocumentFragment();
-  if(advance.filter(x=>x.recovered!==1).length){const unrec=advance.filter(x=>x.recovered!==1);const b=document.createElement('div');b.className='adv-banner';b.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p>本月有 <strong>${unrec.length} 筆代墊款</strong>（共 ${fmt(unrec.reduce((s,x)=>s+x.amount,0))}）尚未收回</p>`;frag.appendChild(b);}
-  const cats={};normal.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>(cats[x.cat]=cats[x.cat]||[]).push(x));
-  Object.keys(cats).forEach(cat=>{const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent=cat;frag.appendChild(lbl);cats[cat].forEach(x=>frag.appendChild(makeCard(x)));});
-  if(advance.length){const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent='代墊款';frag.appendChild(lbl);advance.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>frag.appendChild(makeCard(x)));}
+  el.innerHTML='';
+  const frag = document.createDocumentFragment();
+  if(advance.filter(x=>x.recovered!==1).length){
+    const unrec=advance.filter(x=>x.recovered!==1);
+    const b=document.createElement('div');b.className='adv-banner';
+    b.innerHTML=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg><p>本月有 <strong>${unrec.length} 筆代墊款</strong>（共 ${fmt(unrec.reduce((s,x)=>s+x.amount,0))}）尚未收回</p>`;
+    frag.appendChild(b);
+  }
+  const cats={};
+  normal.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>(cats[x.cat]=cats[x.cat]||[]).push(x));
+  Object.keys(cats).forEach(cat=>{
+    const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent=cat;frag.appendChild(lbl);
+    cats[cat].forEach(x=>frag.appendChild(makeCard(x)));
+  });
+  if(advance.length){
+    const lbl=document.createElement('div');lbl.className='sec-lbl';lbl.textContent='代墊款';frag.appendChild(lbl);
+    advance.sort((a,b)=>(a.date||'').localeCompare(b.date||'')).forEach(x=>frag.appendChild(makeCard(x)));
+  }
   el.appendChild(frag);
 }
 
-// ── makeCard (listener-free — all events via delegation) ──
+// ── Item card (listener-free — all events handled by delegation) ──
+// OPT1: No addEventListener calls here. Data attributes carry the context
+// the delegation handler needs. This means N cards = 0 extra listeners.
 function makeCard(x){
-  const isAdv=x.itype==='advance',isDone=isAdv?x.recovered===1:x.paid===1;
-  const card=document.createElement('div');card.className='icard';
-  card.dataset.id=x.id;card.dataset.isadv=isAdv?'1':'0';
-  card.dataset.amt=x.amount; // Fix 2: raw amount for _patchHomeMetrics
-  const bg=document.createElement('div');bg.className='del-bg';bg.dataset.action='delete';
+  const isAdv=x.itype==='advance';
+  const isDone=isAdv?x.recovered===1:x.paid===1;
+
+  const card=document.createElement('div');
+  card.className='icard';
+  card.dataset.id=x.id;          // OPT1: delegation key
+  card.dataset.isadv=isAdv?'1':'0';
+  card.dataset.amt=x.amount;     // Fix 2: raw integer — never parse formatted text
+
+  // Delete background — data-action tells the delegation handler what to do
+  const bg=document.createElement('div');
+  bg.className='del-bg';
+  bg.dataset.action='delete';
   bg.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除';
-  const row=document.createElement('div');row.className='irow';row.dataset.action='row';
-  const chk=document.createElement('input');chk.type='checkbox';chk.className='ichk';chk.checked=isDone;chk.dataset.action='toggle';
-  chk.setAttribute('aria-label',isAdv?(isDone?'已收回，點擊取消':'未收回，點擊標記收回'):(isDone?'已繳，點擊取消':'未繳，點擊標記繳納'));
-  // Fix 3a: native <button> for keyboard support
-  const info=document.createElement('button');info.className='iinfo';info.type='button';info.dataset.action='edit';info.setAttribute('aria-label',`編輯：${x.name}`);
-  const nm=document.createElement('div');nm.className='iname'+(isDone?' done':'');nm.appendChild(document.createTextNode(x.name));
-  if(!isDone&&x.date&&x.date<today()){const dot=document.createElement('span');dot.className='overdue-dot';dot.setAttribute('aria-label','逾期');nm.appendChild(dot);}
+
+  // Row — swipe state stored directly on the element (avoids closure leak)
+  const row=document.createElement('div');
+  row.className='irow';
+  row.dataset.action='row';
+
+  // Checkbox — data-action="toggle" triggers granular DOM update (OPT2)
+  const chk=document.createElement('input');
+  chk.type='checkbox';chk.className='ichk';
+  chk.checked=isDone;
+  chk.dataset.action='toggle';
+  chk.setAttribute('aria-label', isAdv
+    ? (isDone?'已收回，點擊取消':'未收回，點擊標記收回')
+    : (isDone?'已繳，點擊取消':'未繳，點擊標記繳納'));
+
+  // Fix 3: use native <button> instead of div[role=button] so Enter and Space
+  // trigger click events natively — no extra keydown handler needed on the card.
+  const info=document.createElement('button');
+  info.className='iinfo';
+  info.type='button';           // prevent accidental form submission
+  info.dataset.action='edit';
+  info.setAttribute('aria-label',`編輯：${x.name}`);
+
+  const nm=document.createElement('div');
+  nm.className='iname'+(isDone?' done':'');
+  nm.appendChild(document.createTextNode(x.name));
+  if(!isDone&&x.date&&x.date<today()){
+    const dot=document.createElement('span');dot.className='overdue-dot';dot.setAttribute('aria-label','逾期');nm.appendChild(dot);
+  }
   info.appendChild(nm);
-  const subs=[];if(isAdv&&x.payee)subs.push('代墊：'+x.payee);if(x.date)subs.push(x.date);if(x.note)subs.push(x.note);
-  if(subs.length){const st=document.createElement('div');st.className='isub';st.textContent=subs.join('　');info.appendChild(st);}
+
+  const subs=[];
+  if(isAdv&&x.payee)subs.push('代墊：'+x.payee);
+  if(x.date)subs.push(x.date);
+  if(x.note)subs.push(x.note);
+  if(subs.length){
+    const st=document.createElement('div');st.className='isub';
+    st.textContent=subs.join('　');info.appendChild(st);
+  }
+
+  // Amount + badge
   const right=document.createElement('div');right.className='iright';
   const ac=isAdv?(isDone?'g':'o'):(isDone?'g':'r');
   const amt=document.createElement('div');amt.className=`iamt ${ac}`;amt.textContent=fmt(x.amount);
-  const badge=document.createElement('span');badge.className=`badge ${ac}`;badge.textContent=isAdv?(isDone?'已收回':'代墊中'):(isDone?'已繳':'未繳');
-  right.append(amt,badge);row.append(chk,info,right);card.append(bg,row);
+  const bt=isAdv?(isDone?'已收回':'代墊中'):(isDone?'已繳':'未繳');
+  const badge=document.createElement('span');badge.className=`badge ${ac}`;badge.textContent=bt;
+
+  right.append(amt,badge);
+  row.append(chk,info,right);
+  card.append(bg,row);
   return card;
 }
 
-// ── OPT2: patch home metrics from DOM (no DB call) ──
+// ── OPT2: Lightweight home metric patch ──────────────────
+// Called after a checkbox toggle on the home list.
+// Reads amounts directly from the existing card DOM —
+// no DB query, no DOM rebuild, just arithmetic + textContent.
 function _patchHomeMetrics(){
-  const list=document.getElementById('home-list');if(!list)return;
-  let total=0,paid=0,advUnrec=0;
+  const list = document.getElementById('home-list');
+  if(!list) return;
+  let total=0, paid=0, advUnrec=0;
   list.querySelectorAll('.icard').forEach(card=>{
-    const isAdv=card.dataset.isadv==='1';
-    const raw=parseInt(card.dataset.amt)||0; // Fix 2: read raw from dataset
-    const isDone=card.querySelector('.iname')?.classList.contains('done');
-    if(isAdv){if(!isDone)advUnrec+=raw;}
-    else{total+=raw;if(isDone)paid+=raw;}
+    const isAdv = card.dataset.isadv === '1';
+    // Fix 2: read raw amount from dataset — immune to currency format changes
+    const raw = parseInt(card.dataset.amt) || 0;
+    const isDone = card.querySelector('.iname')?.classList.contains('done');
+    if(isAdv){
+      if(!isDone) advUnrec += raw;
+    } else {
+      total += raw;
+      if(isDone) paid += raw;
+    }
   });
-  document.getElementById('h-tot').textContent=fmt(total);
-  document.getElementById('h-paid').textContent=fmt(paid);
-  document.getElementById('h-unpaid').textContent=fmt(total-paid);
-  document.getElementById('h-adv').textContent=fmt(advUnrec);
-  document.getElementById('h-paid-d').textContent=fmt(paid);
-  document.getElementById('h-unpaid-d').textContent=fmt(total-paid);
-  document.getElementById('h-adv-d').textContent=fmt(advUnrec);
-  const bTotal=budStore.total||0,pct=bTotal>0?Math.min(Math.round(total/bTotal*100),100):0;
-  const fill=document.getElementById('h-bud-fill'),pctLbl=document.getElementById('h-bud-pct');
-  if(bTotal>0){fill.style.width=pct+'%';fill.className='bud-bar-fill'+(pct>=100?' over':pct>=80?' warn':'');pctLbl.textContent=pct+'%';const remEl=document.getElementById('h-remain');if(remEl)remEl.textContent=fmt(Math.max(bTotal-total,0));}
+  document.getElementById('h-tot').textContent  = fmt(total);
+  document.getElementById('h-paid').textContent  = fmt(paid);
+  document.getElementById('h-unpaid').textContent= fmt(total - paid);
+  document.getElementById('h-adv').textContent   = fmt(advUnrec);
+  document.getElementById('h-paid-d').textContent  = fmt(paid);
+  document.getElementById('h-unpaid-d').textContent = fmt(total - paid);
+  document.getElementById('h-adv-d').textContent    = fmt(advUnrec);
+  // Budget bar
+  const bTotal = budStore.total || 0;
+  const pct = bTotal > 0 ? Math.min(Math.round(total/bTotal*100), 100) : 0;
+  const fill = document.getElementById('h-bud-fill');
+  const pctLbl = document.getElementById('h-bud-pct');
+  if(bTotal > 0){
+    fill.style.width = pct + '%';
+    fill.className = 'bud-bar-fill' + (pct>=100?' over':pct>=80?' warn':'');
+    pctLbl.textContent = pct + '%';
+    // remaining hero
+    const remain = bTotal - total;
+    const remEl = document.getElementById('h-remain');
+    if(remEl) remEl.textContent = fmt(Math.max(remain, 0));
+  }
+}
+let _searchTimer=null, isComposing=false;
+function debouncedSearch(){
+  if(isComposing) return; // 避免中文選字過程中頻繁觸發刷新
+  clearTimeout(_searchTimer);
+  _searchTimer=setTimeout(rList,220);
 }
 
-// ── LIST ──
-let _searchTimer=null;
-function debouncedSearch(){if(isComposing)return;clearTimeout(_searchTimer);_searchTimer=setTimeout(rList,220);}
-function setF(f){listFilter=f;['fa','fu','fp','fv'].forEach((id,i)=>{const btn=document.getElementById(id);const on=['all','unpaid','paid','advance'][i]===f;btn.classList.toggle('on',on);btn.setAttribute('aria-pressed',on);});rList();}
+function setF(f){
+  listFilter=f;
+  ['fa','fu','fp','fv'].forEach((id,i)=>{
+    const btn=document.getElementById(id);
+    const isActive=['all','unpaid','paid','advance'][i]===f;
+    btn.classList.toggle('on',isActive);
+    btn.setAttribute('aria-pressed',isActive);  // UX4: A11y
+  });
+  rList();
+}
 async function rList(){
-  dirty.list=false;const{from,to}=getRangeYM(),q=document.getElementById('search').value.trim().toLowerCase();
-  const all=await getByRange(from,to);
-  let items=all;
+  dirty.list=false;
+  const{from,to}=getRangeYM();
+  const q=document.getElementById('search').value.trim().toLowerCase();
+  
+  // 優化：只撈取指定時間範圍內的資料
+  let items = await getByRange(from, to);
+  
   if(listFilter==='paid')items=items.filter(x=>x.paid===1&&x.itype!=='advance');
   else if(listFilter==='unpaid')items=items.filter(x=>x.paid!==1&&x.itype!=='advance');
   else if(listFilter==='advance')items=items.filter(x=>x.itype==='advance');
+  
   if(q)items=items.filter(x=>(x.name||'').toLowerCase().includes(q)||(x.note||'').toLowerCase().includes(q)||(x.payee||'').toLowerCase().includes(q));
   items.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  
   document.getElementById('range-info').textContent=`${from===to?from:from+' ~ '+to}，共 ${items.length} 筆`;
   const el=document.getElementById('list-items');
+  
   if(!items.length){
-    let icon='<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',title='無符合條件的項目',sub='',cta='';
-    if(q){title=`找不到「${esc(q)}」`;sub='試試其他關鍵字';cta=`<button class="empty-cta-sec" onclick="document.getElementById('search').value='';rList()">清空搜尋</button>`;}
-    else if(listFilter==='unpaid'){title='沒有未繳項目';sub='本期所有費用均已繳納 ✓';}
-    else if(listFilter==='paid'){title='沒有已繳項目';}
-    else if(listFilter==='advance'){title='沒有代墊項目';}
-    el.innerHTML=`<div class="empty-msg"><svg viewBox="0 0 24 24">${icon}</svg><strong style="font-size:14px;color:var(--t2);margin-bottom:5px">${title}</strong>${sub?`<span style="font-size:12px">${sub}</span>`:''}${cta}</div>`;
+    // UX6: contextual empty state based on active filter
+    let emptyIcon='<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>';
+    let emptyTitle='無符合條件的項目';
+    let emptySub='';
+    let emptyCTA='';
+    if(q){
+      emptyTitle=`找不到「${esc(q)}」`;
+      emptySub='試試其他關鍵字，或清空搜尋';
+      emptyCTA=`<button class="empty-cta-sec" onclick="document.getElementById('search').value='';rList()">清空搜尋</button>`;
+    } else if(listFilter==='unpaid'){
+      emptyTitle='沒有未繳項目';emptySub='本期所有費用均已繳納 ✓';
+    } else if(listFilter==='paid'){
+      emptyTitle='沒有已繳項目';emptySub='本期尚無已繳費用';
+    } else if(listFilter==='advance'){
+      emptyTitle='沒有代墊項目';emptySub='本期無代墊款紀錄';
+    } else {
+      emptyTitle='本期無費用記錄';emptySub='換一個時間範圍試試';
+    }
+    el.innerHTML=`<div class="empty-msg">
+      <svg viewBox="0 0 24 24">${emptyIcon}</svg>
+      <strong style="font-size:14px;color:var(--text2);margin-bottom:5px">${emptyTitle}</strong>
+      ${emptySub?`<span style="font-size:12px">${emptySub}</span>`:''}
+      ${emptyCTA}
+    </div>`;
     return;
   }
-  el.innerHTML='';const frag=document.createDocumentFragment();
+  
+  el.innerHTML='';
+  // 優化：使用 DocumentFragment
+  const frag = document.createDocumentFragment();
   items.forEach(x=>frag.appendChild(makeCard(x)));
-  const foot=document.createElement('div');foot.className='list-footer';foot.textContent=`共 ${items.length} 筆　合計 ${fmt(items.filter(x=>x.itype!=='advance').reduce((s,x)=>s+x.amount,0))}`;
-  frag.appendChild(foot);el.appendChild(frag);
+  
+  const amt=items.filter(x=>x.itype!=='advance').reduce((s,x)=>s+x.amount,0);
+  const foot=document.createElement('div');foot.className='list-footer';
+  foot.textContent=`共 ${items.length} 筆　合計 ${fmt(amt)}`;
+  frag.appendChild(foot);
+  el.appendChild(frag);
 }
 
-// ── CHART ──
+// ── CHART ────────────────────────────────────────────────
 async function rChart(){
   dirty.chart=false;
   const y=+document.getElementById('cy2').value,m=+document.getElementById('cm2').value;
-  const items=await getByYM(ymStr(y,m));
+  
+  // 優化：直接獲取單月資料
+  const items = await getByYM(ymStr(y,m));
   const normal=items.filter(x=>x.itype!=='advance'),advance=items.filter(x=>x.itype==='advance');
+  
   const catMap={};normal.forEach(x=>catMap[x.cat]=(catMap[x.cat]||0)+x.amount);
-  const cats=Object.keys(catMap),vals=cats.map(c=>catMap[c]),total=vals.reduce((s,v)=>s+v,0);
-  const paidCnt=normal.filter(x=>x.paid===1).length,advUnrec=advance.filter(x=>x.recovered!==1);
+  const cats=Object.keys(catMap),vals=cats.map(c=>catMap[c]);
+  const total=vals.reduce((s,v)=>s+v,0);
+  const paidCnt=normal.filter(x=>x.paid===1).length;
+  const advUnrec=advance.filter(x=>x.recovered!==1);
+  
   document.getElementById('cc').textContent=normal.length;
   document.getElementById('cp').textContent=normal.length?Math.round(paidCnt/normal.length*100)+'%':'—';
   document.getElementById('ca').textContent=advance.length;
   document.getElementById('cam').textContent=fmt(advUnrec.reduce((s,x)=>s+x.amount,0));
-  const totalSpent=normal.reduce((s,x)=>s+x.amount,0),totalBudget=budStore.total||0;
+
+  const totalSpent=normal.reduce((s,x)=>s+x.amount,0);
+  const totalBudget=budStore.total||0;
   document.getElementById('bud-spent-txt').textContent=fmt(totalSpent);
-  if(totalBudget>0){document.getElementById('bud-limit-txt').textContent=` / 上限 ${fmt(totalBudget)}`;const pct=Math.min(Math.round(totalSpent/totalBudget*100),100);const bar=document.getElementById('bud-total-bar');bar.style.width=pct+'%';bar.className='bud-total-fill'+(pct>=100?' over':pct>=80?' warn':'');}
-  else{document.getElementById('bud-limit-txt').textContent='（未設定）';document.getElementById('bud-total-bar').style.width='0%';}
-  const canvas=document.getElementById('pie');if(pieChart){pieChart.destroy();pieChart=null;}
-  if(!cats.length){canvas.getContext('2d').clearRect(0,0,200,200);document.getElementById('pie-leg').innerHTML='<div style="text-align:center;color:var(--t4);font-size:13px;grid-column:1/-1;padding:20px 0">本月無支出資料</div>';}
-  else{const colors=cats.map((_,i)=>PIE_COLORS[i%PIE_COLORS.length]);pieChart=new Chart(canvas,{type:'doughnut',data:{labels:cats,datasets:[{data:vals,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},options:{cutout:'58%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)} (${Math.round(ctx.raw/total*100)}%)`}}}}});const leg=document.getElementById('pie-leg');leg.innerHTML='';cats.forEach((c,i)=>{const li=document.createElement('div');li.className='leg-item';li.innerHTML=`<div class="leg-dot" style="background:${colors[i]}"></div>${esc(c)}<span style="margin-left:auto;font-weight:700;color:var(--t1)">${Math.round(catMap[c]/total*100)}%</span>`;leg.appendChild(li);});}
+  if(totalBudget>0){
+    document.getElementById('bud-limit-txt').textContent=` / 上限 ${fmt(totalBudget)}`;
+    const pct=Math.min(Math.round(totalSpent/totalBudget*100),100);
+    const bar=document.getElementById('bud-total-bar');
+    bar.style.width=pct+'%';
+    bar.className='bud-total-fill'+(pct>=100?' over':pct>=80?' warn':'');
+  }else{
+    document.getElementById('bud-limit-txt').textContent='（未設定）';
+    document.getElementById('bud-total-bar').style.width='0%';
+  }
+
+  const canvas=document.getElementById('pie');
+  if(pieChart){pieChart.destroy();pieChart=null;}
+  if(!cats.length){
+    canvas.getContext('2d').clearRect(0,0,200,200);
+    document.getElementById('pie-leg').innerHTML='<div style="text-align:center;color:var(--text3);font-size:13px;grid-column:1/-1;padding:20px 0">本月無支出資料</div>';
+  }else{
+    const colors=cats.map((_,i)=>PIE_COLORS[i%PIE_COLORS.length]);
+    pieChart=new Chart(canvas,{type:'doughnut',data:{labels:cats,datasets:[{data:vals,backgroundColor:colors,borderWidth:0,hoverOffset:4}]},options:{cutout:'58%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.raw)} (${Math.round(ctx.raw/total*100)}%)`}}}}});
+    const leg=document.getElementById('pie-leg');leg.innerHTML='';
+    const frag = document.createDocumentFragment();
+    cats.forEach((c,i)=>{const li=document.createElement('div');li.className='leg-item';li.innerHTML=`<div class="leg-dot" style="background:${colors[i]}"></div>${esc(c)}<span style="margin-left:auto;font-weight:700;color:var(--text)">${Math.round(catMap[c]/total*100)}%</span>`;frag.appendChild(li);});
+    leg.appendChild(frag);
+  }
+
   const bEl=document.getElementById('bud-cat-rows');bEl.innerHTML='';let any=false;
-  getCats().forEach((cat,idx)=>{const spent=catMap[cat]||0,limit=budStore.byIdx[idx]||0;if(!spent&&!limit)return;any=true;const pct=limit>0?Math.min(Math.round(spent/limit*100),100):0,over=limit>0&&spent>limit,color=over?'var(--D)':pct>80?'var(--W)':'var(--P)';const d=document.createElement('div');d.innerHTML=`<div class="bud-cat-row"><span style="color:var(--t2)">${esc(cat)}</span><span style="color:${over?'var(--D)':'var(--t2)'}"><strong>${fmt(spent)}</strong>${limit?' / '+fmt(limit):''}</span></div>${limit?`<div class="bud-cat-track"><div class="bud-cat-fill" style="width:${pct}%;background:${color}"></div></div>`:''}`;bEl.appendChild(d);});
-  if(!any)bEl.innerHTML='<div style="font-size:13px;color:var(--t4)">本月無支出，或尚未設定預算</div>';
+  const bFrag = document.createDocumentFragment();
+  getCats().forEach((cat,idx)=>{
+    const spent=catMap[cat]||0,limit=budStore.byIdx[idx]||0;
+    if(!spent&&!limit)return;any=true;
+    const pct=limit>0?Math.min(Math.round(spent/limit*100),100):0;
+    const over=limit>0&&spent>limit;
+    const color=over?'var(--red)':pct>80?'var(--amber)':'var(--green)';
+    const d=document.createElement('div');
+    d.innerHTML=`<div class="bud-cat-row"><span style="color:var(--text2)">${esc(cat)}</span><span style="color:${over?'var(--red)':'var(--text2)'}"><strong>${fmt(spent)}</strong>${limit?' / '+fmt(limit):''}</span></div>${limit?`<div class="bud-cat-track"><div class="bud-cat-fill" style="width:${pct}%;background:${color}"></div></div>`:''}`;
+    bFrag.appendChild(d);
+  });
+  if(!any){bEl.innerHTML='<div style="font-size:13px;color:var(--text3)">本月無支出，或尚未設定預算</div>';}
+  else{bEl.appendChild(bFrag);}
 }
+
 function openBudModal(){
-  const el=document.getElementById('b-fields');el.innerHTML='';setAmt('bt-r','bt-d',budStore.total||0);
-  getCats().forEach((cat,idx)=>{const cur=budStore.byIdx[idx]||0;const div=document.createElement('div');div.className='field';div.innerHTML=`<label>${esc(cat)}</label><div class="amt-wrap" onclick="document.getElementById('bd-r-${idx}').focus()"><span class="amt-unit">$</span><span class="amt-disp${cur>0?'':' ph'}" id="bd-d-${idx}">${cur>0?fmtN(cur):'0'}</span><input class="amt-input" id="bd-r-${idx}" type="number" inputmode="numeric" min="0" step="1" value="${cur||''}" oninput="syncAmt('bd-r-${idx}','bd-d-${idx}')" onfocus="this.select()"></div>`;el.appendChild(div);});
+  const el=document.getElementById('b-fields');el.innerHTML='';
+  setAmt('bt-r','bt-d',budStore.total||0);
+  const frag = document.createDocumentFragment();
+  getCats().forEach((cat,idx)=>{
+    const cur=budStore.byIdx[idx]||0;
+    const div=document.createElement('div');div.className='field';
+    div.innerHTML=`<label>${esc(cat)}</label><div class="amt-wrap" onclick="document.getElementById('bd-r-${idx}').focus()"><span class="amt-unit">$</span><span class="amt-disp${cur>0?'':' ph'}" id="bd-d-${idx}">${cur>0?fmtN(cur):'0'}</span><input class="amt-input" id="bd-r-${idx}" type="number" inputmode="numeric" min="0" step="1" value="${cur||''}" oninput="syncAmt('bd-r-${idx}','bd-d-${idx}')" onfocus="this.select()"></div>`;
+    frag.appendChild(div);
+  });
+  el.appendChild(frag);
   document.getElementById('bov').classList.add('on');
 }
 function saveBudgets(){
-  budStore.total=getAmt('bt-r');getCats().forEach((_,idx)=>{const el=document.getElementById(`bd-r-${idx}`);if(!el)return;const v=parseInt(el.value)||0;if(v>0)budStore.byIdx[idx]=v;else delete budStore.byIdx[idx];});
-  saveBudStore();document.getElementById('bov').classList.remove('on');rHome();rChart();dirty.trend=true;rSettings();toast('預算已儲存');
+  budStore.total=getAmt('bt-r');
+  getCats().forEach((_,idx)=>{
+    const el=document.getElementById(`bd-r-${idx}`);if(!el)return;
+    const v=parseInt(el.value)||0;
+    if(v>0)budStore.byIdx[idx]=v;else delete budStore.byIdx[idx];
+  });
+  saveBudStore();
+  document.getElementById('bov').classList.remove('on');
+  rHome(); rChart(); dirty.trend=true;
+  rSettings();
+  toast('預算已儲存');
 }
 
-// ── TREND ──
+// ── TREND ────────────────────────────────────────────────
 async function rTrend(){
-  dirty.trend=false;const nowY=cy(),all=await getAll();
+  dirty.trend=false;
+  const nowY=cy(),all=await getAll();
   const dataYears=[...new Set(all.map(x=>x.ym?parseInt(x.ym.slice(0,4)):0).filter(y=>y>=2026&&y<=2046))];
-  if(!dataYears.includes(nowY))dataYears.push(nowY);dataYears.sort((a,b)=>a-b);
+  if(!dataYears.includes(nowY))dataYears.push(nowY);
+  dataYears.sort((a,b)=>a-b);
   if(!selYears){selYears=[nowY];saveSelYrs();}
-  selYears=selYears.filter(y=>y>=2026&&y<=2046);if(!selYears.length){selYears=[nowY];saveSelYrs();}
+  selYears=selYears.filter(y=>y>=2026&&y<=2046);
+  if(!selYears.length){selYears=[nowY];saveSelYrs();}
+
   const chipsEl=document.getElementById('yr-chips');chipsEl.innerHTML='';
-  dataYears.forEach(yr=>{const on=selYears.includes(yr),pal=YR_PAL[dataYears.indexOf(yr)%YR_PAL.length];const chip=document.createElement('button');chip.className='yr-chip'+(on?' on':'');if(on)chip.style.background=pal.line;chip.innerHTML=`<span class="yr-chip-dot" style="background:${on?'#fff':pal.line}"></span>${yr}年`;chip.onclick=()=>toggleYear(yr,dataYears);chipsEl.appendChild(chip);});
+  const cFrag = document.createDocumentFragment();
+  dataYears.forEach(yr=>{
+    const on=selYears.includes(yr),pal=YR_PAL[dataYears.indexOf(yr)%YR_PAL.length];
+    const chip=document.createElement('button');chip.className='yr-chip'+(on?' on':'');
+    if(on)chip.style.background=pal.line;
+    chip.innerHTML=`<span class="yr-chip-dot" style="background:${on?'#fff':pal.line}"></span>${yr}年`;
+    chip.onclick=()=>toggleYear(yr,dataYears);cFrag.appendChild(chip);
+  });
+  chipsEl.appendChild(cFrag);
+
   const labels=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  const datasets=selYears.map(yr=>{const palIdx=dataYears.indexOf(yr)%YR_PAL.length,pal=YR_PAL[palIdx];const data=Array.from({length:12},(_,i)=>{const k=ymStr(yr,i+1);return all.filter(x=>x.ym===k&&x.itype!=='advance').reduce((s,x)=>s+x.amount,0);});return{label:yr+'年',data,borderColor:pal.line,backgroundColor:pal.fill,borderWidth:2,pointRadius:3,pointHoverRadius:6,fill:true,tension:.38};});
+  const datasets=selYears.map(yr=>{
+    const palIdx=dataYears.indexOf(yr)%YR_PAL.length,pal=YR_PAL[palIdx];
+    const data=Array.from({length:12},(_,i)=>{const k=ymStr(yr,i+1);return all.filter(x=>x.ym===k&&x.itype!=='advance').reduce((s,x)=>s+x.amount,0);});
+    return{label:yr+'年',data,borderColor:pal.line,backgroundColor:pal.fill,borderWidth:2,pointRadius:3,pointHoverRadius:6,fill:true,tension:.38};
+  });
   if(areaChart){areaChart.destroy();areaChart=null;}
-  areaChart=new Chart(document.getElementById('area-chart'),{type:'line',data:{labels,datasets},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}：${fmt(ctx.raw)}`}}},scales:{x:{grid:{color:'rgba(128,128,128,.07)'},ticks:{font:{size:11},color:'var(--t4)'}},y:{grid:{color:'rgba(128,128,128,.07)'},ticks:{font:{size:11},color:'var(--t4)',callback:v=>v===0?'$0':'$'+fmtN(Math.round(v/1000))+'K'},beginAtZero:true}}}});
+  areaChart=new Chart(document.getElementById('area-chart'),{type:'line',data:{labels,datasets},options:{responsive:true,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}：${fmt(ctx.raw)}`}}},scales:{x:{grid:{color:'rgba(128,128,128,.07)'},ticks:{font:{size:11},color:'var(--text3)'}},y:{grid:{color:'rgba(128,128,128,.07)'},ticks:{font:{size:11},color:'var(--text3)',callback:v=>v===0?'$0':'$'+fmtN(Math.round(v/1000))+'K'},beginAtZero:true}}}});
+
   const legEl=document.getElementById('chart-legend');legEl.innerHTML='';
   selYears.forEach(yr=>{const pal=YR_PAL[dataYears.indexOf(yr)%YR_PAL.length];const li=document.createElement('div');li.className='chart-leg-item';li.innerHTML=`<div class="chart-leg-dot" style="background:${pal.line}"></div>${yr}年`;legEl.appendChild(li);});
-  const statsEl=document.getElementById('trend-stats');statsEl.innerHTML='';const sFrag=document.createDocumentFragment();
-  selYears.forEach(yr=>{const pal=YR_PAL[dataYears.indexOf(yr)%YR_PAL.length];const yItems=all.filter(x=>x.ym&&x.ym.startsWith(yr+'-')&&x.itype!=='advance');const yTotal=yItems.reduce((s,x)=>s+x.amount,0);const active=Array.from({length:12},(_,i)=>ymStr(yr,i+1)).filter(k=>yItems.some(x=>x.ym===k));const avg=active.length?yTotal/active.length:0;const t1=document.createElement('div');t1.className='stat-tile';t1.style.borderTop=`3px solid ${pal.line}`;t1.innerHTML=`<div class="stat-lbl">${yr} 年總支出</div><div class="stat-val">${fmt(yTotal)}</div>`;const t2=document.createElement('div');t2.className='stat-tile';t2.style.borderTop=`3px solid ${pal.line}`;t2.innerHTML=`<div class="stat-lbl">${yr} 月均</div><div class="stat-val">${fmt(avg)}</div>`;sFrag.appendChild(t1);sFrag.appendChild(t2);});
-  statsEl.appendChild(sFrag);
-}
-function toggleYear(yr,dataYears){if(selYears.includes(yr)){if(selYears.length<=1){toast('至少選擇一個年份');return;}selYears=selYears.filter(y=>y!==yr);}else{if(selYears.length>=5){toast('最多同時比較 5 個年份');return;}selYears.push(yr);selYears.sort((a,b)=>a-b);}saveSelYrs();rTrend();}
 
-// ── Navigation ──
+  const statsEl=document.getElementById('trend-stats');statsEl.innerHTML='';
+  selYears.forEach(yr=>{
+    const pal=YR_PAL[dataYears.indexOf(yr)%YR_PAL.length];
+    const yItems=all.filter(x=>x.ym&&x.ym.startsWith(yr+'-')&&x.itype!=='advance');
+    const yTotal=yItems.reduce((s,x)=>s+x.amount,0);
+    const active=Array.from({length:12},(_,i)=>ymStr(yr,i+1)).filter(k=>yItems.some(x=>x.ym===k));
+    const avg=active.length?yTotal/active.length:0;
+    statsEl.innerHTML+=`<div class="stat-tile" style="border-top:3px solid ${pal.line}"><div class="stat-lbl">${yr} 年總支出</div><div class="stat-val">${fmt(yTotal)}</div></div><div class="stat-tile" style="border-top:3px solid ${pal.line}"><div class="stat-lbl">${yr} 月均</div><div class="stat-val">${fmt(avg)}</div></div>`;
+  });
+  document.getElementById('cat-preview') && (document.getElementById('cat-preview').textContent=getCats().join('、'));
+  document.getElementById('remind-preview') && (document.getElementById('remind-preview').textContent=remCfg.enabled?`已啟用 · 提前 ${remCfg.dueSoonDays} 天提醒`:'已停用');
+  // Also keep settings screen in sync if it was previously visited
+  rSettings();
+}
+function toggleYear(yr,dataYears){
+  if(selYears.includes(yr)){if(selYears.length<=1){toast('至少選擇一個年份');return;}selYears=selYears.filter(y=>y!==yr);}
+  else{if(selYears.length>=5){toast('最多同時比較 5 個年份');return;}selYears.push(yr);selYears.sort((a,b)=>a-b);}
+  saveSelYrs();rTrend();
+}
+
+// ── Navigation ───────────────────────────────────────────
 const SCREENS=['home','list','chart','trend','settings'];
 function showS(name){
-  SCREENS.forEach(s=>{document.getElementById('s-'+s).classList.toggle('on',s===name);const tab=document.getElementById('tab-'+s);tab.classList.toggle('on',s===name);tab.setAttribute('aria-selected',s===name);});
+  SCREENS.forEach(s=>{
+    document.getElementById('s-'+s).classList.toggle('on',s===name);
+    const tab=document.getElementById('tab-'+s);
+    tab.classList.toggle('on',s===name);
+    tab.setAttribute('aria-selected',s===name); // OPT3: ARIA tablist
+  });
+  // FAB only on home screen
   document.getElementById('fab').classList.toggle('on',name==='home');
   window.scrollTo(0,0);
-  if(name==='chart'&&dirty.chart)rChart();else if(name==='trend'&&dirty.trend)rTrend();else if(name==='list'&&dirty.list)rList();else if(name==='home'&&dirty.home)rHome();else if(name==='settings')rSettings();
-}
-function rSettings(){
-  const cp=document.getElementById('cat-preview-settings');if(cp)cp.textContent=getCats().join('、');
-  const rp=document.getElementById('remind-preview-settings');if(rp)rp.textContent=remCfg.enabled?`已啟用 · 提前 ${remCfg.dueSoonDays} 天提醒`:'已停用';
-  const bp=document.getElementById('bud-preview-settings');if(bp)bp.textContent=budStore.total>0?`每月上限 ${fmt(budStore.total)}`:'尚未設定';
+  if(name==='chart'&&dirty.chart)rChart();
+  else if(name==='trend'&&dirty.trend)rTrend();
+  else if(name==='list'&&dirty.list)rList();
+  else if(name==='home'&&dirty.home)rHome();
+  else if(name==='settings')rSettings();
 }
 
-// ── Form ──
-function toggleDetail(){const panel=document.getElementById('detail-panel'),toggle=document.getElementById('detail-toggle');const open=panel.classList.toggle('open');toggle.classList.toggle('open',open);toggle.setAttribute('aria-expanded',open);}
-function toggleAdvFields(){const fields=document.getElementById('adv-fields'),btn=document.getElementById('adv-toggle');const open=fields.classList.toggle('open');btn.classList.toggle('open',open);btn.setAttribute('aria-expanded',open);}
+// ── Settings render ──────────────────────────────────────
+// Refreshes the Settings screen's preview texts whenever it is visited
+// or whenever categories / reminders / budget are updated.
+function rSettings(){
+  // Category preview
+  const cp=document.getElementById('cat-preview-settings');
+  if(cp) cp.textContent=getCats().join('、');
+  // Reminder preview
+  const rp=document.getElementById('remind-preview-settings');
+  if(rp) rp.textContent=remCfg.enabled?`已啟用 · 提前 ${remCfg.dueSoonDays} 天提醒`:'已停用';
+  // Budget preview
+  const bp=document.getElementById('bud-preview-settings');
+  if(bp) bp.textContent=budStore.total>0?`每月上限 ${fmt(budStore.total)}`:'尚未設定';
+}
+
+// ── Full-screen form ─────────────────────────────────────
 async function openForm(id){
   editId=id||null;refreshCatSel();
   document.getElementById('fs-title').textContent=id?'編輯費用項目':'新增費用項目';
   document.getElementById('fs-del').style.display=id?'':'none';
-  const adv=document.getElementById('adv-fields'),advBtn=document.getElementById('adv-toggle');
-  if(!id){adv.classList.remove('open');advBtn.classList.remove('open');advBtn.setAttribute('aria-expanded','false');}
-  else{adv.classList.add('open');advBtn.classList.add('open');advBtn.setAttribute('aria-expanded','true');}
   if(id){
-    const x=await getById(id);if(!x)return;
-    const isAdv=x.itype==='advance';document.getElementById('rt-advance').checked=isAdv;document.getElementById('rt-normal').checked=!isAdv;onTypeChange();
-    document.getElementById('f-cat').value=x.cat;document.getElementById('f-name').value=x.name;setAmt('f-amt-r','f-amt-d',x.amount);
-    document.getElementById('f-date').value=x.date||'';document.getElementById('f-note').value=x.note||'';document.getElementById('f-payee').value=x.payee||'';
-    const rd=x.remindDays||0;document.getElementById('rd-off').checked=rd===0;document.getElementById('rd-3').checked=rd===3;document.getElementById('rd-7').checked=rd===7;
+    // 這裡只需要撈一筆，不影響大局
+    const all=await getAll(),x=all.find(a=>a.id===id);if(!x)return;
+    const isAdv=x.itype==='advance';
+    document.getElementById('rt-advance').checked=isAdv;
+    document.getElementById('rt-normal').checked=!isAdv;
+    onTypeChange();
+    document.getElementById('f-cat').value=x.cat;
+    document.getElementById('f-name').value=x.name;
+    setAmt('f-amt-r','f-amt-d',x.amount);
+    document.getElementById('f-date').value=x.date||'';
+    document.getElementById('f-note').value=x.note||'';
+    document.getElementById('f-payee').value=x.payee||'';
+    const rd=x.remindDays||0;
+    document.getElementById('rd-off').checked=rd===0;
+    document.getElementById('rd-3').checked=rd===3;
+    document.getElementById('rd-7').checked=rd===7;
     if(isAdv){document.getElementById('r-unrec').checked=x.recovered!==1;document.getElementById('r-rec').checked=x.recovered===1;}
     else{document.getElementById('r-unpaid').checked=x.paid!==1;document.getElementById('r-paid').checked=x.paid===1;}
   }else{
     document.getElementById('rt-normal').checked=true;document.getElementById('rt-advance').checked=false;onTypeChange();
-    document.getElementById('f-cat').value=getCats()[0];document.getElementById('f-name').value='';setAmt('f-amt-r','f-amt-d',0);
-    document.getElementById('f-date').value=today();document.getElementById('f-note').value='';document.getElementById('f-payee').value='';
-    document.getElementById('rd-3').checked=true;document.getElementById('r-unpaid').checked=true;document.getElementById('r-paid').checked=false;
+    document.getElementById('f-cat').value=getCats()[0];
+    document.getElementById('f-name').value='';
+    setAmt('f-amt-r','f-amt-d',0);
+    document.getElementById('f-date').value=today();
+    document.getElementById('f-note').value='';document.getElementById('f-payee').value='';
+    document.getElementById('rd-3').checked=true;
+    document.getElementById('r-unpaid').checked=true;document.getElementById('r-paid').checked=false;
     document.getElementById('r-unrec').checked=true;document.getElementById('r-rec').checked=false;
   }
+  // UX7: always start with advanced fields collapsed for new entries
+  const advFields=document.getElementById('adv-fields');
+  const advBtn=document.getElementById('adv-toggle');
+  if(!id){
+    advFields.classList.remove('open');advBtn.classList.remove('open');
+    advBtn.setAttribute('aria-expanded','false');
+  } else {
+    // editing: open advanced section so all fields are visible
+    advFields.classList.add('open');advBtn.classList.add('open');
+    advBtn.setAttribute('aria-expanded','true');
+  }
+
   document.getElementById('fsform').classList.add('on');
-  _savedScroll=window.scrollY;document.body.style.top=`-${_savedScroll}px`;document.body.classList.add('locked');
-  setTimeout(()=>document.getElementById('f-name').focus(),320);
+  _savedScroll=window.scrollY;
+  document.body.style.top=`-${_savedScroll}px`;
+  document.body.classList.add('locked');
+  
+  // 優化：取消手機版自動 focus 導致鍵盤彈出畫面閃動，保留電腦版 (大於 480px) focus
+  if (window.innerWidth > 480) {
+    setTimeout(() => document.getElementById('f-name').focus(), 320);
+  }
 }
-function closeForm(){document.getElementById('fsform').classList.remove('on');editId=null;document.body.classList.remove('locked');document.body.style.top='';window.scrollTo(0,_savedScroll||0);}
+
+function closeForm(){
+  document.getElementById('fsform').classList.remove('on');
+  editId=null;
+  document.body.classList.remove('locked');
+  document.body.style.top='';
+  window.scrollTo(0,_savedScroll||0);
+}
+
 async function saveItem(){
-  const name=document.getElementById('f-name').value.trim(),amount=getAmt('f-amt-r');
-  if(!name){alert('請填寫項目名稱');return;}if(!amount||amount<=0){alert('請填寫正確金額（需大於 0）');return;}
-  const isAdv=document.getElementById('rt-advance').checked,{y,m}=curYM();
+  const name=document.getElementById('f-name').value.trim();
+  const amount=getAmt('f-amt-r');
+  if(!name){alert('請填寫項目名稱');return;}
+  if(!amount||amount<=0){alert('請填寫正確金額（需大於 0）');return;}
+  const isAdv=document.getElementById('rt-advance').checked;
+  const{y,m}=curYM();
   const remDays=parseInt(document.querySelector('input[name="remind"]:checked')?.value||'0');
-  const item={itype:isAdv?'advance':'normal',cat:document.getElementById('f-cat').value,name,amount,date:document.getElementById('f-date').value,note:document.getElementById('f-note').value.trim(),remindDays:remDays,ym:ymStr(y,m)};
+  const item={
+    itype:isAdv?'advance':'normal',
+    cat:document.getElementById('f-cat').value,
+    name,amount,
+    date:document.getElementById('f-date').value,
+    note:document.getElementById('f-note').value.trim(),
+    remindDays:remDays,
+    ym:ymStr(y,m)
+  };
   if(isAdv){item.payee=document.getElementById('f-payee').value.trim();item.recovered=document.getElementById('r-rec').checked?1:0;item.paid=1;}
   else{item.paid=document.getElementById('r-paid').checked?1:0;}
   if(editId)item.id=editId;
   await putItem(item);closeForm();dirtyAll();rHome();toast(editId?'已更新':'已新增：'+name);
 }
-async function confirmDel(){if(!editId||!confirm('確定刪除此項目？'))return;await delItem(editId);closeForm();dirtyAll();rHome();toast('已刪除');}
-async function copyPrev(){const{y,m}=curYM(),prevM=m===1?12:m-1,prevY=m===1?y-1:y;const prev=await getByYM(ymStr(prevY,prevM));if(!prev.length)return;for(const x of prev)await putItem({...x,id:undefined,date:'',paid:x.itype==='advance'?1:0,recovered:0,ym:ymStr(y,m)});dirtyAll();rHome();toast(`已複製 ${prev.length} 筆項目`);}
+async function confirmDel(){
+  if(!editId||!confirm('確定刪除此項目？'))return;
+  await delItem(editId);closeForm();dirtyAll();rHome();toast('已刪除');
+}
 
-// ── Categories ──
+// ── Copy prev month ──────────────────────────────────────
+async function copyPrev(){
+  const{y,m}=curYM(),prevM=m===1?12:m-1,prevY=m===1?y-1:y;
+  const prev=await getByYM(ymStr(prevY,prevM));if(!prev.length)return;
+  for(const x of prev)await putItem({...x,id:undefined,date:'',paid:x.itype==='advance'?1:0,recovered:0,ym:ymStr(y,m)});
+  dirtyAll();rHome();toast(`已複製 ${prev.length} 筆項目`);
+}
+
+// ── Categories ───────────────────────────────────────────
 function openCatModal(){renderCatTags();document.getElementById('new-cat').value='';document.getElementById('cov').classList.add('on');}
-function renderCatTags(){const el=document.getElementById('cat-tags');el.innerHTML='';getCats().forEach(cat=>{const tag=document.createElement('div');tag.className='cat-tag';const safe=cat.replace(/'/g,"\\'");tag.innerHTML=`${esc(cat)}<svg class="cat-del" viewBox="0 0 14 14" onclick="delCat('${safe}',event)"><path d="M2 2l10 10M12 2L2 12"/></svg>`;el.appendChild(tag);});}
+function renderCatTags(){
+  const el=document.getElementById('cat-tags');el.innerHTML='';
+  getCats().forEach(cat=>{const tag=document.createElement('div');tag.className='cat-tag';const safe=cat.replace(/'/g,"\\'");tag.innerHTML=`${esc(cat)}<svg class="cat-del" viewBox="0 0 14 14" onclick="delCat('${safe}',event)"><path d="M2 2l10 10M12 2L2 12"/></svg>`;el.appendChild(tag);});
+}
 function addCat(){const inp=document.getElementById('new-cat'),name=inp.value.trim();if(!name)return;if(userCats.includes(name)){toast('類別已存在');return;}if(userCats.length>=12){toast('最多 12 個類別');return;}userCats.push(name);saveCats();renderCatTags();inp.value='';toast(`已新增「${name}」`);}
 function delCat(cat,e){if(e)e.stopPropagation();if(userCats.length<=1){toast('至少保留一個類別');return;}if(!confirm(`刪除「${cat}」？`))return;userCats=userCats.filter(c=>c!==cat);saveCats();renderCatTags();}
 
-// ── Reminders settings ──
+// ── Reminder settings ────────────────────────────────────
 function openRemindModal(){
   const rows=document.getElementById('remind-settings-rows');
   const mk=(k,l,s)=>`<div class="toggle-row"><div><div class="toggle-lbl">${l}</div>${s?`<div class="toggle-sub">${s}</div>`:''}</div><label class="toggle"><input type="checkbox" id="rs-${k}" ${remCfg[k]?'checked':''}><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>`;
   rows.innerHTML=mk('enabled','啟用到期提醒','開啟後首頁顯示提醒卡片')+mk('showOverdue','逾期未繳提醒','日期已過且未繳納')+mk('showDueSoon','即將到期提醒','繳費日即將到來')+mk('showAdvanceUnrec','代墊未收回提醒','代墊款尚未收回')+
-  `<div class="toggle-row"><div class="toggle-lbl">提前提醒天數</div><select id="rs-days" style="height:34px;border:1px solid var(--b2);border-radius:var(--r);background:var(--rs);color:var(--t1);padding:0 8px;-webkit-appearance:none;width:70px"><option value="1" ${remCfg.dueSoonDays===1?'selected':''}>1 天</option><option value="3" ${remCfg.dueSoonDays===3?'selected':''}>3 天</option><option value="7" ${remCfg.dueSoonDays===7?'selected':''}>7 天</option><option value="14" ${remCfg.dueSoonDays===14?'selected':''}>14 天</option></select></div>`;
+  `<div class="toggle-row"><div class="toggle-lbl">提前提醒天數</div><select id="rs-days" style="height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:0 8px;-webkit-appearance:none;width:70px"><option value="1" ${remCfg.dueSoonDays===1?'selected':''}>1 天</option><option value="3" ${remCfg.dueSoonDays===3?'selected':''}>3 天</option><option value="7" ${remCfg.dueSoonDays===7?'selected':''}>7 天</option><option value="14" ${remCfg.dueSoonDays===14?'selected':''}>14 天</option></select></div>`;
   document.getElementById('rsov').classList.add('on');
 }
-function saveRemindSettings(){remCfg.enabled=document.getElementById('rs-enabled').checked;remCfg.showOverdue=document.getElementById('rs-showOverdue').checked;remCfg.showDueSoon=document.getElementById('rs-showDueSoon').checked;remCfg.showAdvanceUnrec=document.getElementById('rs-showAdvanceUnrec').checked;remCfg.dueSoonDays=parseInt(document.getElementById('rs-days').value);saveRemCfg();document.getElementById('rsov').classList.remove('on');remDismissed='';localStorage.removeItem('ep_rem_dis');dirtyAll();rHome();rSettings();toast('提醒設定已儲存');}
+function saveRemindSettings(){
+  remCfg.enabled=document.getElementById('rs-enabled').checked;
+  remCfg.showOverdue=document.getElementById('rs-showOverdue').checked;
+  remCfg.showDueSoon=document.getElementById('rs-showDueSoon').checked;
+  remCfg.showAdvanceUnrec=document.getElementById('rs-showAdvanceUnrec').checked;
+  remCfg.dueSoonDays=parseInt(document.getElementById('rs-days').value);
+  saveRemCfg();document.getElementById('rsov').classList.remove('on');
+  remDismissed='';localStorage.removeItem('ep_rem_dis');
+  dirtyAll();rHome();rSettings();toast('提醒設定已儲存');
+}
 
-// ── Export / Import ──
+// ── Export / Import ──────────────────────────────────────
 async function exportJSON(){const all=await getAll();const blob=new Blob([JSON.stringify({v:8,exported:new Date().toISOString(),items:all},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`expenses-${today()}.json`;a.click();toast('JSON 備份已下載');}
-async function exportCSV(){const all=await getAll();const hdr='年月,類別,類型,項目名稱,金額,日期,備註,繳納狀態,代墊對象,收回狀態';const rows=all.map(x=>[x.ym,x.cat,x.itype==='advance'?'代墊':'一般',`"${(x.name||'').replace(/"/g,'""')}"`,x.amount,x.date||'',`"${(x.note||'').replace(/"/g,'""')}"`,x.paid===1?'已繳':'未繳',x.payee||'',x.itype==='advance'?(x.recovered===1?'已收回':'未收回'):'—'].join(','));const blob=new Blob(['\uFEFF'+hdr+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`expenses-${today()}.csv`;a.click();toast('CSV 已下載');}
-async function importFile(e){const file=e.target.files[0];if(!file)return;try{const text=await file.text();let items;if(file.name.endsWith('.json')){const d=JSON.parse(text);items=d.items||d;if(!Array.isArray(items))throw new Error('格式錯誤');}else{const lines=text.replace(/^\uFEFF/,'').split('\n').slice(1).filter(l=>l.trim());items=lines.map(l=>{const c=l.match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g)||[];const q=i=>(c[i]||'').replace(/^"|"$/g,'').replace(/""/g,'"');return{ym:q(0),cat:q(1)||'其他',itype:q(2)==='代墊'?'advance':'normal',name:q(3),amount:parseFloat(q(4))||0,date:q(5)||'',note:q(6)||'',paid:q(7)==='已繳'?1:0,payee:q(8)||'',recovered:q(9)==='已收回'?1:0};}).filter(x=>x.name&&x.amount>0);}if(!confirm(`匯入 ${items.length} 筆？（不刪除現有資料）`))return;for(const item of items){const c={...item};delete c.id;await putItem(c);}dirtyAll();rHome();toast(`已匯入 ${items.length} 筆`);}catch(err){alert('匯入失敗：'+err.message);}e.target.value='';}
+async function exportCSV(){
+  const all=await getAll();
+  const hdr='年月,類別,類型,項目名稱,金額,日期,備註,繳納狀態,代墊對象,收回狀態';
+  const rows=all.map(x=>[x.ym,x.cat,x.itype==='advance'?'代墊':'一般',`"${(x.name||'').replace(/"/g,'""')}"`,x.amount,x.date||'',`"${(x.note||'').replace(/"/g,'""')}"`,x.paid===1?'已繳':'未繳',x.payee||'',x.itype==='advance'?(x.recovered===1?'已收回':'未收回'):'—'].join(','));
+  const blob=new Blob(['\uFEFF'+hdr+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`expenses-${today()}.csv`;a.click();toast('CSV 已下載');
+}
+async function importFile(e){
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const text=await file.text();let items;
+    if(file.name.endsWith('.json')){const d=JSON.parse(text);items=d.items||d;if(!Array.isArray(items))throw new Error('格式錯誤');}
+    else{const lines=text.replace(/^\uFEFF/,'').split('\n').slice(1).filter(l=>l.trim());items=lines.map(l=>{const c=l.match(/(".*?"|[^,]+|(?<=,)(?=,)|^(?=,)|(?<=,)$)/g)||[];const q=i=>(c[i]||'').replace(/^"|"$/g,'').replace(/""/g,'"');return{ym:q(0),cat:q(1)||'其他',itype:q(2)==='代墊'?'advance':'normal',name:q(3),amount:parseFloat(q(4))||0,date:q(5)||'',note:q(6)||'',paid:q(7)==='已繳'?1:0,payee:q(8)||'',recovered:q(9)==='已收回'?1:0};}).filter(x=>x.name&&x.amount>0);}
+    if(!confirm(`匯入 ${items.length} 筆？（不刪除現有資料）`))return;
+    for(const item of items){const c={...item};delete c.id;await putItem(c);}
+    dirtyAll();rHome();toast(`已匯入 ${items.length} 筆`);
+  }catch(err){alert('匯入失敗：'+err.message);}
+  e.target.value='';
+}
 
-// ── SW & Manifest ──
-if('serviceWorker' in navigator){const sw=`const C='ep-v8';self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>{const f=fetch(e.request).then(res=>{if(res.ok)c.put(e.request,res.clone());return res;}).catch(()=>r);return r||f;})));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}
-(function(){const m={name:'費用管理',short_name:'費用管理',start_url:location.href,display:'standalone',theme_color:'#0F766E',background_color:'#F9FAFB',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230F766E'/%3E%3Ctext x='50' y='67' font-size='54' text-anchor='middle' fill='white'%3E%24%3C/text%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));document.head.appendChild(l);})();
+// ── SW & Manifest (Optimized Caching) ────────────────────
+if('serviceWorker' in navigator){
+  // 優化：在 Service Worker 安裝時預先快取 Chart.js CDN，保證斷網可用性
+  const sw=`const C='ep-v8.1';self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(C).then(c=>c.add('https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js').catch(()=>{})))});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k))))));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.open(C).then(c=>c.match(e.request).then(r=>{const f=fetch(e.request).then(res=>{if(res.ok)c.put(e.request,res.clone());return res;}).catch(()=>r);return r||f;})));});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+}
+(function(){
+  const m={name:'費用管理',short_name:'費用管理',start_url:location.href,display:'standalone',theme_color:'#1D9E75',background_color:'#f7f6f2',icons:[{src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231D9E75'/%3E%3Ctext x='50' y='67' font-size='54' text-anchor='middle' fill='white'%3E%24%3C/text%3E%3C/svg%3E",sizes:'512x512',type:'image/svg+xml'}]};
+  const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/json'}));document.head.appendChild(l);
+})();
 
-// ── Init ──
+// ── Init ─────────────────────────────────────────────────
 openDB().then(()=>{
-  buildSelects();refreshCatSel();rSettings();
-
-  // ── Search IME + debounce ──
-  const sInput=document.getElementById('search');
+  buildSelects();
+  refreshCatSel();
+  rSettings();  // populate settings previews on first load
+  
+  // 優化：處理中文輸入法 (IME) 的搜尋防抖事件
+  const sInput = document.getElementById('search');
   if(sInput){
     sInput.addEventListener('compositionstart',()=>isComposing=true);
     sInput.addEventListener('compositionend',()=>{isComposing=false;debouncedSearch();});
+    // UX3: input listener wired here (not via oninput attr) to prevent IME double-fire
     sInput.addEventListener('input',debouncedSearch);
   }
 
-  // ── OPT1: Event Delegation ──
-  const swipeState=new WeakMap();
-  const DIR={IDLE:0,HORIZ:1,VERT:2};
-  const COMMIT=18,RATIO=2.0,TRIGGER=60,FULL=70;
+  // ── OPT1+OPT2: Single Event Delegation for all item lists ──────────────
+  // N cards × 0 listeners each. ONE set per container, shared handler logic.
+  // WeakMap stores swipe state per row — auto-GC'd when the row is removed.
+  const swipeState = new WeakMap();
+  const DIR = {IDLE:0, HORIZ:1, VERT:2};
+  const COMMIT=18, RATIO=2.0, TRIGGER=60, FULL=70;
 
   function attachListDelegation(containerId){
-    const container=document.getElementById(containerId);if(!container)return;
+    const container = document.getElementById(containerId);
+    if(!container) return;
 
-    container.addEventListener('click',async e=>{
-      // Fix OPT1: use closest() so clicks on nested SVG or child elements still work
-      const card=e.target.closest('.icard');if(!card)return;
-      const id=parseInt(card.dataset.id);
+    // click + change ────────────────────────────────────────────────────────
+    container.addEventListener('click', async e=>{
+      const card = e.target.closest('.icard');
+      if(!card) return;
+      const id = parseInt(card.dataset.id);
+      const isAdv = card.dataset.isadv === '1';
+
+      // [delete] explicit tap on del-bg (revealed by swipe)
       if(e.target.closest('[data-action="delete"]')){
-        const x=await getById(id);if(!x)return;
-        const backup={...x};await delItem(id);dirtyAll();card.remove();
-        toastUndo(`已刪除「${x.name}」`,async()=>{delete backup.id;await putItem(backup);dirtyAll();rHome();toast('已復原');});
+        const x = await getById(id); if(!x) return;
+        const backup = {...x};
+        await delItem(id);
+        dirtyAll();
+        card.remove(); // OPT2: remove only this card, no full rebuild
+        toastUndo(`已刪除「${x.name}」`, async()=>{
+          delete backup.id; await putItem(backup); dirtyAll(); rHome(); toast('已復原');
+        });
         return;
       }
-      if(e.target.closest('[data-action="edit"]')){openForm(id);return;}
-      const row=card.querySelector('.irow');
-      if(row&&row.style.transform){row.style.transform='';}
+
+      // [edit] tap on info area
+      if(e.target.closest('[data-action="edit"]')){ openForm(id); return; }
+
+      // [row tap] cancel if swipe is open
+      const row = card.querySelector('.irow');
+      if(row && row.style.transform){ row.style.transform = ''; }
     });
 
-    // OPT2: checkbox — granular DOM patch, no full re-render
-    container.addEventListener('change',async e=>{
-      if(!e.target.classList.contains('ichk'))return;
-      const card=e.target.closest('.icard');if(!card)return;
-      const id=parseInt(card.dataset.id),isAdv=card.dataset.isadv==='1',checked=e.target.checked;
-      const x=await getById(id);if(!x)return;
-      if(isAdv){x.recovered=checked?1:0;}else{x.paid=checked?1:0;}
-      await putItem(x);dirtyAll();
-      const row=card.querySelector('.irow'),nm=row.querySelector('.iname'),badge=row.querySelector('.badge'),amtEl=row.querySelector('.iamt'),dot=nm.querySelector('.overdue-dot');
-      const cc=isAdv?(checked?'g':'o'):(checked?'g':'r'),bt=isAdv?(checked?'已收回':'代墊中'):(checked?'已繳':'未繳');
-      nm.classList.toggle('done',checked);badge.className=`badge ${cc}`;badge.textContent=bt;amtEl.className=`iamt ${cc}`;
-      if(checked&&dot)dot.remove();
-      e.target.setAttribute('aria-label',isAdv?(checked?'已收回，點擊取消':'未收回，點擊標記收回'):(checked?'已繳，點擊取消':'未繳，點擊標記繳納'));
-      if(containerId==='home-list')_patchHomeMetrics();
-      toast(isAdv?(checked?'已標記收回 ✓':'已取消收回'):(checked?'已標記繳納 ✓':'已取消繳納'));
+    // OPT2: checkbox toggle — patch only the 4 affected DOM nodes, no re-render
+    container.addEventListener('change', async e=>{
+      if(!e.target.classList.contains('ichk')) return;
+      const card = e.target.closest('.icard'); if(!card) return;
+      const id = parseInt(card.dataset.id);
+      const isAdv = card.dataset.isadv === '1';
+      const checked = e.target.checked;
+
+      // Write to DB
+      const x = await getById(id); if(!x) return;
+      if(isAdv){ x.recovered = checked ? 1 : 0; }
+      else      { x.paid      = checked ? 1 : 0; }
+      await putItem(x);
+      dirtyAll(); // mark other screens stale — they'll refresh on next visit
+
+      // Granular DOM patch — O(1) cost regardless of list size
+      const row    = card.querySelector('.irow');
+      const nm     = row.querySelector('.iname');
+      const badge  = row.querySelector('.badge');
+      const amtEl  = row.querySelector('.iamt');
+      const dot    = nm.querySelector('.overdue-dot');
+      const cc     = isAdv ? (checked?'g':'o') : (checked?'g':'r');
+      const bt     = isAdv ? (checked?'已收回':'代墊中') : (checked?'已繳':'未繳');
+
+      nm.classList.toggle('done', checked);
+      badge.className = `badge ${cc}`;   badge.textContent = bt;
+      amtEl.className = `iamt ${cc}`;
+      if(checked && dot) dot.remove();
+      e.target.setAttribute('aria-label', isAdv
+        ? (checked?'已收回，點擊取消':'未收回，點擊標記收回')
+        : (checked?'已繳，點擊取消':'未繳，點擊標記繳納'));
+
+      // Update home hero numbers without rebuilding the list
+      if(containerId === 'home-list') _patchHomeMetrics();
+
+      toast(isAdv ? (checked?'已標記收回 ✓':'已取消收回')
+                  : (checked?'已標記繳納 ✓':'已取消繳納'));
     });
 
-    container.addEventListener('touchstart',e=>{const row=e.target.closest('.irow');if(!row)return;swipeState.set(row,{phase:DIR.IDLE,sx:e.touches[0].clientX,sy:e.touches[0].clientY,dx:0});},{passive:true});
-    container.addEventListener('touchmove',e=>{
-      const row=e.target.closest('.irow');if(!row)return;const s=swipeState.get(row);if(!s||s.phase===DIR.VERT)return;
-      const rx=e.touches[0].clientX-s.sx,ry=e.touches[0].clientY-s.sy;
-      if(s.phase===DIR.IDLE){if(Math.sqrt(rx*rx+ry*ry)<COMMIT)return;s.phase=(Math.abs(rx)/Math.max(Math.abs(ry),.1)>RATIO&&rx<0)?DIR.HORIZ:DIR.VERT;if(s.phase===DIR.VERT)return;}
-      e.preventDefault();s.dx=rx<-50?-50+(rx+50)*.3:rx;s.dx=Math.max(s.dx,-FULL);if(s.dx<0)row.style.transform=`translateX(${s.dx}px)`;
-    },{passive:false});
-    container.addEventListener('touchend',e=>{const row=e.target.closest('.irow');if(!row)return;const s=swipeState.get(row);if(!s)return;if(s.phase===DIR.HORIZ&&s.dx<-TRIGGER){row.style.transform=`translateX(-${FULL}px)`;}else{row.style.transform='';}swipeState.set(row,{...s,phase:DIR.IDLE,dx:0});},{passive:true});
+    // Swipe-to-delete ───────────────────────────────────────────────────────
+    container.addEventListener('touchstart', e=>{
+      const row = e.target.closest('.irow'); if(!row) return;
+      swipeState.set(row, {phase:DIR.IDLE, sx:e.touches[0].clientX, sy:e.touches[0].clientY, dx:0});
+    }, {passive:true});
+
+    container.addEventListener('touchmove', e=>{
+      const row = e.target.closest('.irow'); if(!row) return;
+      const s = swipeState.get(row); if(!s || s.phase===DIR.VERT) return;
+      const rx = e.touches[0].clientX - s.sx;
+      const ry = e.touches[0].clientY - s.sy;
+      if(s.phase === DIR.IDLE){
+        if(Math.sqrt(rx*rx+ry*ry) < COMMIT) return;
+        s.phase = (Math.abs(rx)/Math.max(Math.abs(ry),.1) > RATIO && rx<0) ? DIR.HORIZ : DIR.VERT;
+        if(s.phase === DIR.VERT) return;
+      }
+      e.preventDefault();
+      s.dx = rx < -50 ? -50+(rx+50)*.3 : rx;
+      s.dx = Math.max(s.dx, -FULL);
+      if(s.dx < 0) row.style.transform = `translateX(${s.dx}px)`;
+    }, {passive:false});
+
+    container.addEventListener('touchend', e=>{
+      const row = e.target.closest('.irow'); if(!row) return;
+      const s = swipeState.get(row); if(!s) return;
+      if(s.phase === DIR.HORIZ && s.dx < -TRIGGER){
+        row.style.transform = `translateX(-${FULL}px)`;
+      } else {
+        row.style.transform = '';
+      }
+      swipeState.set(row, {...s, phase:DIR.IDLE, dx:0});
+    }, {passive:true});
   }
+
   attachListDelegation('home-list');
   attachListDelegation('list-items');
 
-  // Fix 3b: Global Escape key — closes topmost open modal/overlay
-  let _lastFocus=null;
-  const _origOpenForm=window.openForm;
-  window.openForm=async function(id){_lastFocus=document.activeElement;await _origOpenForm(id);};
-  document.addEventListener('keydown',e=>{
-    if(e.key!=='Escape')return;
-    const fsform=document.getElementById('fsform');
-    if(fsform&&fsform.classList.contains('on')){closeForm();_lastFocus?.focus();return;}
-    const openSheet=document.querySelector('.overlay.on');
-    if(openSheet){openSheet.classList.remove('on');_lastFocus?.focus();}
+  // Fix 3b: Global Escape key handler — closes the topmost open modal/overlay.
+  // Priority order matches z-index stack: fsform > sheet overlays.
+  // After closing, focus returns to the element that opened the modal
+  // (stored in _lastFocus) so keyboard users don't lose their position.
+  let _lastFocus = null;
+
+  // Intercept openForm / sheet opens to save focus origin
+  const _origOpenForm = openForm;
+  window.openForm = async function(id){
+    _lastFocus = document.activeElement;
+    await _origOpenForm(id);
+  };
+  ['bov','cov','rsov'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const observer = new MutationObserver(()=>{
+      if(el.classList.contains('on') && !el._focusSaved){
+        el._focusSaved = true;
+        _lastFocus = document.activeElement;
+      } else if(!el.classList.contains('on')){
+        el._focusSaved = false;
+      }
+    });
+    observer.observe(el, {attributes:true, attributeFilter:['class']});
+  });
+
+  document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape') return;
+
+    // Highest z-index first: full-screen form
+    const fsform = document.getElementById('fsform');
+    if(fsform && fsform.classList.contains('on')){
+      closeForm();
+      if(_lastFocus) _lastFocus.focus();
+      return;
+    }
+
+    // Sheet overlays: close whichever is open
+    const openSheet = document.querySelector('.overlay.on');
+    if(openSheet){
+      openSheet.classList.remove('on');
+      if(_lastFocus) _lastFocus.focus();
+    }
   });
 
   rHome();
