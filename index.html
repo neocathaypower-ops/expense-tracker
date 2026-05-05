@@ -251,11 +251,22 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   box-shadow:var(--shadow-sm);
   transition:border-color var(--t-slow);
 }
-/* Primary hero card gets gold border */
+/* Expense card: subtle red accent */
 .hero-card:first-child{
-  border-color:rgba(201,168,76,.25);
+  border-color:rgba(240,107,107,.18);
 }
 .hero-card:first-child::before{
+  content:'';
+  position:absolute;top:-30px;right:-30px;
+  width:100px;height:100px;
+  background:radial-gradient(circle,rgba(240,107,107,.10) 0%,transparent 70%);
+  pointer-events:none;
+}
+/* Wealth / budget card: gold accent */
+.hero-card:last-child{
+  border-color:rgba(201,168,76,.25);
+}
+.hero-card:last-child::before{
   content:'';
   position:absolute;top:-30px;right:-30px;
   width:100px;height:100px;
@@ -276,7 +287,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .hero-val.r{color:var(--red)}
 
 /* Gold shimmer for primary balance number */
-.hero-card:first-child .hero-val{
+.hero-card:last-child .hero-val{
   background:linear-gradient(90deg,var(--gold) 0%,var(--gold-dk) 35%,var(--gold) 60%,#C9A84C 100%);
   background-size:200% auto;
   -webkit-background-clip:text;
@@ -1029,8 +1040,8 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <div class="app-info-name">費用管理</div>
       <div class="app-info-version">個人記帳 PWA</div>
       <div class="app-info-rows">
-        <div class="app-info-row"><span>版本</span><span>v1.0.0</span></div>
-        <div class="app-info-row"><span>建置日期</span><span>2026/04/24</span></div>
+        <div class="app-info-row"><span>版本</span><span>v2.0.0</span></div>
+        <div class="app-info-row"><span>建置日期</span><span>2026/05/05</span></div>
         <div class="app-info-row"><span>開發者</span><span>Henry</span></div>
       </div>
     </div>
@@ -1999,7 +2010,7 @@ function openRemindModal(){
   const rows=document.getElementById('remind-settings-rows');
   const mk=(k,l,s)=>`<div class="toggle-row"><div><div class="toggle-lbl">${l}</div>${s?`<div class="toggle-sub">${s}</div>`:''}</div><label class="toggle"><input type="checkbox" id="rs-${k}" ${remCfg[k]?'checked':''}><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>`;
   rows.innerHTML=mk('enabled','啟用到期提醒','開啟後首頁顯示提醒卡片')+mk('showOverdue','逾期未繳提醒','日期已過且未繳納')+mk('showDueSoon','即將到期提醒','繳費日即將到來')+mk('showAdvanceUnrec','代墊未收回提醒','代墊款尚未收回')+
-  `<div class="toggle-row"><div class="toggle-lbl">提前提醒天數</div><select id="rs-days" style="height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);padding:0 8px;-webkit-appearance:none;width:70px"><option value="1" ${remCfg.dueSoonDays===1?'selected':''}>1 天</option><option value="3" ${remCfg.dueSoonDays===3?'selected':''}>3 天</option><option value="7" ${remCfg.dueSoonDays===7?'selected':''}>7 天</option><option value="14" ${remCfg.dueSoonDays===14?'selected':''}>14 天</option></select></div>`;
+  `<div class="toggle-row"><div class="toggle-lbl">提前提醒天數</div><select id="rs-days" style="height:34px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--surface3);color:var(--text);padding:0 8px;-webkit-appearance:none;width:70px"><option value="1" ${remCfg.dueSoonDays===1?'selected':''}>1 天</option><option value="3" ${remCfg.dueSoonDays===3?'selected':''}>3 天</option><option value="7" ${remCfg.dueSoonDays===7?'selected':''}>7 天</option><option value="14" ${remCfg.dueSoonDays===14?'selected':''}>14 天</option></select></div>`;
   document.getElementById('rsov').classList.add('on');
 }
 function saveRemindSettings(){
