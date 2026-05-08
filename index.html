@@ -288,27 +288,6 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
 .bud-bar-fill{height:100%;background:var(--green);border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
 .bud-bar-fill.warn{background:var(--amber)}.bud-bar-fill.over{background:var(--red)}
 
-/* ── Detail accordion ────────────────────────────────────── */
-.detail-toggle{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:7px 16px;background:var(--surface);
-  cursor:pointer;user-select:none;flex-shrink:0;
-  transition:background var(--t-fast);
-}
-.detail-toggle:active{background:var(--surface2)}
-.detail-toggle-lbl{font-size:11px;color:var(--text3);letter-spacing:.02em}
-.detail-toggle svg{width:13px;height:13px;stroke:var(--text3);fill:none;stroke-width:2;stroke-linecap:round;transition:transform .22s}
-.detail-toggle.open svg{transform:rotate(180deg)}
-.detail-panel{display:none;padding:0 16px 10px;background:var(--surface);flex-shrink:0}
-.detail-panel.open{display:flex;gap:8px}
-.detail-tile{
-  flex:1;background:var(--bg);border-radius:var(--radius);
-  padding:10px 12px;box-shadow:var(--shadow-sm);
-}
-.detail-lbl{font-size:10px;color:var(--text3);margin-bottom:5px;letter-spacing:.05em;text-transform:uppercase;font-weight:500}
-.detail-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
-.detail-val.g{color:var(--green)}.detail-val.r{color:var(--red)}.detail-val.o{color:var(--orange)}
-
 /* ── Cards ───────────────────────────────────────────────── */
 .card{
   background:var(--bg);border-radius:var(--radius-lg);
@@ -1316,6 +1295,7 @@ function doUndo(){
 function toggleDetail(){
   const panel=document.getElementById('detail-panel');
   const toggle=document.getElementById('detail-toggle');
+  if(!panel||!toggle)return; // elements removed from DOM — no-op
   const open=panel.classList.toggle('open');
   toggle.classList.toggle('open',open);
   toggle.setAttribute('aria-expanded',open);
