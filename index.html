@@ -441,6 +441,20 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
   text-transform:uppercase;letter-spacing:.08em;margin:14px 0 7px 2px;
 }
 
+/* ── Proxy-deduction note (below hero big number) ────────── */
+.hero-deduct-note{
+  display:flex;align-items:center;gap:7px;
+  margin-top:6px;margin-bottom:2px;flex-wrap:wrap;
+}
+.hero-deduct-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--orange-lt);color:var(--orange-dk);
+  border:0.5px solid rgba(212,120,48,.25);
+  border-radius:99px;padding:3px 10px;
+  font-size:11px;font-weight:600;white-space:nowrap;
+}
+.hero-deduct-sub{font-size:11px;color:var(--text3);white-space:nowrap}
+
 /* ── Feature 1: Date-group headers in list view ──────────── */
 .date-grp-hdr{
   display:flex;align-items:center;gap:8px;
@@ -842,13 +856,16 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <!-- Eyebrow -->
       <div class="hero-eyebrow">
         <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-        本月費用總覽
+        本月個人實際支出
       </div>
 
-      <!-- Primary big number -->
+      <!-- Primary big number — personal expenses ONLY (advance/proxy excluded) -->
       <div class="hero-big-num" id="h-tot">—</div>
 
-      <!-- Sub-breakdown chips — IDs = canonical write targets for JS -->
+      <!-- Deduction note: shown only when advance items exist in this month -->
+      <div class="hero-deduct-note" id="h-deduct-note" style="display:none" aria-live="polite"></div>
+
+      <!-- Sub-breakdown chips — 已繳/未繳 are personal only; 代墊待收 = receivable -->
       <div class="hero-chips">
         <div class="hero-chip">
           <div class="hero-chip-dot" style="background:var(--green)"></div>
@@ -862,7 +879,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
         </div>
         <div class="hero-chip">
           <div class="hero-chip-dot" style="background:var(--orange)"></div>
-          <span class="hero-chip-lbl">代墊</span>
+          <span class="hero-chip-lbl">代墊待收</span>
           <span class="hero-chip-val o" id="h-adv-d">—</span>
         </div>
       </div>
@@ -972,7 +989,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
         <div class="stat-tile"><div class="stat-lbl">項目數</div><div class="stat-val" id="cc">—</div></div>
         <div class="stat-tile"><div class="stat-lbl">已繳比例</div><div class="stat-val g" id="cp">—</div></div>
         <div class="stat-tile"><div class="stat-lbl">代墊筆數</div><div class="stat-val o" id="ca">—</div></div>
-        <div class="stat-tile"><div class="stat-lbl">代墊待收</div><div class="stat-val o" id="cam">—</div></div>
+        <div class="stat-tile"><div class="stat-lbl">代墊排除額</div><div class="stat-val o" id="cam" title="本月全部代墊款金額，已從個人支出中排除">—</div></div>
       </div>
       <div class="card">
         <div class="card-title">分類預算 <a onclick="openBudModal()">設定</a></div>
@@ -1053,7 +1070,7 @@ body.locked{overflow:hidden;position:fixed;width:100%;top:0;left:0}
       <div class="app-info-name">費用管理</div>
       <div class="app-info-version">個人記帳 PWA</div>
       <div class="app-info-rows">
-        <div class="app-info-row"><span>版本</span><span>v2.1</span></div>
+        <div class="app-info-row"><span>版本</span><span>v1.0.0</span></div>
         <div class="app-info-row"><span>建置日期</span><span>2026/05/11</span></div>
         <div class="app-info-row"><span>開發者</span><span>Henry</span></div>
       </div>
@@ -1460,24 +1477,53 @@ function renderRems(rems,max){
   wrap.innerHTML='';wrap.appendChild(sec);
 }
 
+// ── Proxy deduction note helper ─────────────────────────
+// Called by rHome() and _patchHomeMetrics() to keep deduction note in sync.
+//   advTotal : sum of ALL advance items this period (the full exclusion amount)
+//   personal : personal expense total already shown in h-tot
+function _setDeductNote(advTotal, personal){
+  const el = document.getElementById('h-deduct-note');
+  if(!el) return;
+  if(advTotal > 0){
+    // Formula: Personal = TotalOutflow − ProxyPayments
+    const outflow = personal + advTotal;
+    el.style.display = '';
+    el.innerHTML =
+      `<span class="hero-deduct-badge">代墊 ${fmt(advTotal)} 已排除</span>`+
+      `<span class="hero-deduct-sub">總流出 ${fmt(outflow)} &minus; 代墊 ${fmt(advTotal)}</span>`;
+  } else {
+    el.style.display = 'none';
+    el.innerHTML = '';
+  }
+}
+
 // ── HOME ─────────────────────────────────────────────────
 async function rHome(){
   dirty.home=false;
   const{y,m}=curYM(),key=ymStr(y,m);
   const items = await getByYM(key);
-  const normal=items.filter(x=>x.itype!=='advance');
-  const advance=items.filter(x=>x.itype==='advance');
-  const total=normal.reduce((s,x)=>s+x.amount,0);
-  const paid=normal.filter(x=>x.paid===1).reduce((s,x)=>s+x.amount,0);
-  const unpaid=total-paid;
-  const advUnrec=advance.filter(x=>x.recovered!==1).reduce((s,x)=>s+x.amount,0);
+  // ── Accounting: separate personal expenses from proxy payments ──────
+  // Formula: Personal Expense = Total Outflow − Proxy/Advance Payments
+  const normal  = items.filter(x => x.itype !== 'advance');  // personal only
+  const advance = items.filter(x => x.itype === 'advance');  // proxy / reimbursable
 
-  // UX1: primary 2-metric hero
-  document.getElementById('h-tot').textContent=fmt(total);
-  // breakdown chips (canonical targets — no duplication)
-  document.getElementById('h-paid-d').textContent=fmt(paid);
-  document.getElementById('h-unpaid-d').textContent=fmt(unpaid);
-  document.getElementById('h-adv-d').textContent=fmt(advUnrec);
+  const total   = normal.reduce((s,x) => s+x.amount, 0);    // personal total
+  const paid    = normal.filter(x => x.paid===1).reduce((s,x) => s+x.amount, 0);
+  const unpaid  = total - paid;
+
+  // Proxy accounting — all advances excluded from personal total
+  const advTotal  = advance.reduce((s,x) => s+x.amount, 0); // full proxy outflow
+  const advUnrec  = advance.filter(x => x.recovered!==1)    // outstanding receivable
+                           .reduce((s,x) => s+x.amount, 0);
+
+  // h-tot = personal expense ONLY (proxy payments never included)
+  document.getElementById('h-tot').textContent = fmt(total);
+  document.getElementById('h-paid-d').textContent   = fmt(paid);
+  document.getElementById('h-unpaid-d').textContent = fmt(unpaid);
+  document.getElementById('h-adv-d').textContent    = fmt(advUnrec); // receivable
+
+  // Deduction note — visible only when proxy items exist this month
+  _setDeductNote(advTotal, total);
   // remaining budget hero
   const bTotal=budStore.total||0;
   const remain=bTotal>0?bTotal-total:null;
@@ -1626,23 +1672,27 @@ function makeCard(x){
 function _patchHomeMetrics(){
   const list = document.getElementById('home-list');
   if(!list) return;
-  let total=0, paid=0, advUnrec=0;
+
+  // Accounting: personal total never includes proxy/advance amounts
+  let total=0, paid=0, advTotal=0, advUnrec=0;
   list.querySelectorAll('.icard').forEach(card=>{
     const isAdv = card.dataset.isadv === '1';
-    // Fix 2: read raw amount from dataset — immune to currency format changes
-    const raw = parseInt(card.dataset.amt) || 0;
-    const isDone = card.querySelector('.iname')?.classList.contains('done');
+    const raw   = parseInt(card.dataset.amt) || 0;
+    const isDone= card.querySelector('.iname')?.classList.contains('done');
     if(isAdv){
-      if(!isDone) advUnrec += raw;
+      advTotal += raw;                    // track ALL proxy outflow
+      if(!isDone) advUnrec += raw;        // outstanding receivable
     } else {
-      total += raw;
+      total += raw;                       // personal expense only
       if(isDone) paid += raw;
     }
   });
-  document.getElementById('h-tot').textContent  = fmt(total);
-  document.getElementById('h-paid-d').textContent  = fmt(paid);
+
+  document.getElementById('h-tot').textContent      = fmt(total);
+  document.getElementById('h-paid-d').textContent   = fmt(paid);
   document.getElementById('h-unpaid-d').textContent = fmt(total - paid);
   document.getElementById('h-adv-d').textContent    = fmt(advUnrec);
+  _setDeductNote(advTotal, total);
   // Budget bar
   const bTotal = budStore.total || 0;
   const pct = bTotal > 0 ? Math.min(Math.round(total/bTotal*100), 100) : 0;
@@ -1796,11 +1846,17 @@ async function rChart(){
   const paidCnt=normal.filter(x=>x.paid===1).length;
   const advUnrec=advance.filter(x=>x.recovered!==1);
 
-  document.getElementById('cc').textContent=normal.length;
-  document.getElementById('cp').textContent=normal.length?Math.round(paidCnt/normal.length*100)+'%':'—';
-  document.getElementById('ca').textContent=advance.length;
-  document.getElementById('cam').textContent=fmt(advUnrec.reduce((s,x)=>s+x.amount,0));
+  // Personal-only accounting: advances excluded from all personal metrics
+  const advTotal   = advance.reduce((s,x)=>s+x.amount, 0);  // full proxy outflow
+  const advUnrecAmt= advUnrec.reduce((s,x)=>s+x.amount, 0); // outstanding receivable
 
+  document.getElementById('cc').textContent  = normal.length;
+  document.getElementById('cp').textContent  = normal.length?Math.round(paidCnt/normal.length*100)+'%':'—';
+  document.getElementById('ca').textContent  = advance.length;
+  // cam = full proxy exclusion amount (not just unreimbursed) so it matches the formula
+  document.getElementById('cam').textContent = fmt(advTotal);
+
+  // totalSpent = personal expenses ONLY — never inflated by proxy payments
   const totalSpent=normal.reduce((s,x)=>s+x.amount,0);
   const totalBudget=budStore.total||0;
   document.getElementById('bud-spent-txt').textContent=fmt(totalSpent);
@@ -1869,26 +1925,39 @@ async function rChartRange(){
     if(ymKeys.length>60)break; // safety cap: 5 years
   }
 
-  // Fetch all items in range
-  const items=await getByRange(fromKey,toKey);
-  const normal=items.filter(x=>x.itype!=='advance');
+  // Fetch all items in range — separate personal from proxy up front
+  const items   = await getByRange(fromKey, toKey);
+  const normal  = items.filter(x => x.itype !== 'advance');  // personal only
+  const advItems= items.filter(x => x.itype === 'advance');  // proxy / reimbursable
 
-  // Aggregate monthly totals and category map
-  const monthTotals=ymKeys.map(k=>normal.filter(x=>x.ym===k).reduce((s,x)=>s+x.amount,0));
+  // Personal monthly totals (budget & chart use this — never includes proxy)
+  const monthTotals    = ymKeys.map(k => normal.filter(x=>x.ym===k).reduce((s,x)=>s+x.amount,0));
+  // Proxy monthly totals (for deduction transparency in summary)
+  const advMonthTotals = ymKeys.map(k => advItems.filter(x=>x.ym===k).reduce((s,x)=>s+x.amount,0));
+
   const allCatMap={};
   normal.forEach(x=>allCatMap[x.cat]=(allCatMap[x.cat]||0)+x.amount);
 
-  // Summary stats
-  const grandTotal=monthTotals.reduce((s,v)=>s+v,0);
-  const activeMths=monthTotals.filter(v=>v>0).length;
-  const avgMth=activeMths>0?grandTotal/activeMths:0;
-  const maxMth=Math.max(...monthTotals,0);
-  const maxMthKey=ymKeys[monthTotals.indexOf(maxMth)]||'—';
+  // Summary stats — grandTotal is PERSONAL only
+  const grandTotal   = monthTotals.reduce((s,v)=>s+v,0);
+  const grandAdvTotal= advMonthTotals.reduce((s,v)=>s+v,0);
+  const activeMths   = monthTotals.filter(v=>v>0).length;
+  const avgMth       = activeMths>0?grandTotal/activeMths:0;
+  const maxMth       = Math.max(...monthTotals,0);
+  const maxMthKey    = ymKeys[monthTotals.indexOf(maxMth)]||'—';
 
-  document.getElementById('range-summary').innerHTML=`
-    <div class="range-sum-tile"><div class="range-sum-lbl">範圍總支出</div><div class="range-sum-val r">${fmt(grandTotal)}</div></div>
-    <div class="range-sum-tile"><div class="range-sum-lbl">月均支出</div><div class="range-sum-val">${fmt(Math.round(avgMth))}</div></div>
-    <div class="range-sum-tile"><div class="range-sum-lbl">最高月份</div><div class="range-sum-val r">${maxMthKey}</div></div>`;
+  // Build summary — deduction tile only shown when proxy items exist in range
+  const deductTile = grandAdvTotal>0
+    ? `<div class="range-sum-tile">
+         <div class="range-sum-lbl">代墊已排除</div>
+         <div class="range-sum-val o">${fmt(grandAdvTotal)}</div>
+       </div>`
+    : '';
+  document.getElementById('range-summary').innerHTML=
+    `<div class="range-sum-tile"><div class="range-sum-lbl">個人實際支出</div><div class="range-sum-val r">${fmt(grandTotal)}</div></div>`+
+    `<div class="range-sum-tile"><div class="range-sum-lbl">月均支出</div><div class="range-sum-val">${fmt(Math.round(avgMth))}</div></div>`+
+    deductTile+
+    (grandAdvTotal===0?`<div class="range-sum-tile"><div class="range-sum-lbl">最高月份</div><div class="range-sum-val r">${maxMthKey}</div></div>`:'');
 
   // X-axis labels: shorten if many months
   const labels=ymKeys.map(k=>{
